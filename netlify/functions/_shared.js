@@ -8,7 +8,7 @@ const admin = require('firebase-admin');
 
 // Initialize Firebase Admin once (survives warm Lambda invocations)
 if (!admin.apps.length) {
-  const raw = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf8');
+  const raw = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf8').replace(/^﻿/, '');
   admin.initializeApp({ credential: admin.credential.cert(JSON.parse(raw)) });
 }
 
