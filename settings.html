@@ -1,0 +1,684 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="./admin-styles.css">
+</head>
+<body>
+
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name" id="sidebar-brand">Booking Admin</div>
+      <div class="sidebar-brand-tag">Management Panel</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="./dashboard.html"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a href="./bookings.html"><i class="fa-solid fa-calendar-check"></i> Bookings</a>
+      <a href="./calendar.html"><i class="fa-solid fa-calendar-days"></i> Calendar</a>
+      <a href="./blocking.html"><i class="fa-solid fa-ban"></i> Date Blocking</a>
+      <a href="./units.html"><i class="fa-solid fa-building"></i> Units</a>
+      <a href="./addons.html"><i class="fa-solid fa-circle-plus"></i> Add-ons</a>
+      <a href="./amenities.html"><i class="fa-solid fa-star"></i> Amenities</a>
+      <a href="./holiday-rates.html"><i class="fa-solid fa-tag"></i> Holiday Rates</a>
+      <a href="./expenses.html"><i class="fa-solid fa-receipt"></i> Expenses</a>
+      <a href="./design.html"><i class="fa-solid fa-palette"></i> Design</a>
+      <a href="./settings.html" class="active"><i class="fa-solid fa-gear"></i> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-email" id="admin-email">—</div>
+      <button class="btn-signout" id="signout-btn">
+        <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-header-left">
+        <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Settings</span>
+      </div>
+    </header>
+
+    <!-- Loading state -->
+    <div id="settings-loading" class="page-body">
+      <div class="loading-state"><span class="spinner"></span><p style="margin-top:8px;">Loading settings…</p></div>
+    </div>
+
+    <!-- Settings content (hidden until loaded) -->
+    <div id="settings-content" style="display:none;">
+      <div class="page-body">
+        <div class="settings-layout">
+
+          <!-- Left nav -->
+          <div class="settings-nav">
+            <a class="settings-nav-item active" data-target="s-business">Business Info</a>
+            <a class="settings-nav-item" data-target="s-booking">Booking Config</a>
+            <a class="settings-nav-item" data-target="s-gcash">GCash</a>
+            <a class="settings-nav-item" data-target="s-maya">Maya / PayMaya</a>
+            <a class="settings-nav-item" data-target="s-bank">Bank Transfer</a>
+            <a class="settings-nav-item" data-target="s-email">Email (SMTP)</a>
+            <a class="settings-nav-item" data-target="s-notifications">Notifications</a>
+            <a class="settings-nav-item" data-target="s-telegram">Telegram</a>
+            <a class="settings-nav-item" data-target="s-policies">Policies</a>
+          </div>
+
+          <!-- Sections -->
+          <div class="settings-sections">
+
+            <!-- Business Info -->
+            <div class="card settings-section" id="s-business">
+              <div class="card-header"><span class="card-title"><i class="fa-solid fa-building"></i> Business Information</span></div>
+              <div class="card-body">
+                <div class="settings-grid">
+                  <div class="form-group full">
+                    <label class="form-label">Company / Property Name</label>
+                    <input type="text" class="form-control" id="companyName" placeholder="Lester Domain Staycation">
+                  </div>
+                  <div class="form-group full">
+                    <label class="form-label">Address</label>
+                    <input type="text" class="form-control" id="address" placeholder="123 Main St, City, Province">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" class="form-control" id="phone" placeholder="+63 912 345 6789">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Public Email</label>
+                    <input type="email" class="form-control" id="pub-email" placeholder="hello@yourproperty.com">
+                  </div>
+                  <div class="form-group full">
+                    <label class="form-label">Booking Website URL</label>
+                    <input type="url" class="form-control" id="bookingWebsiteUrl" placeholder="https://bookingph.github.io/staycation-booking-site/">
+                    <div class="form-hint">Used in rejection emails so guests can re-book.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Booking Config -->
+            <div class="card settings-section" id="s-booking">
+              <div class="card-header"><span class="card-title"><i class="fa-solid fa-sliders"></i> Booking Configuration</span></div>
+              <div class="card-body">
+                <div class="settings-grid">
+                  <div class="form-group">
+                    <label class="form-label">Reservation Fee (₱)</label>
+                    <input type="number" class="form-control" id="downPaymentAmount" placeholder="500" min="0">
+                    <div class="form-hint">Amount guest pays now to hold dates.</div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Security Deposit (₱)</label>
+                    <input type="number" class="form-control" id="securityDeposit" placeholder="1000" min="0">
+                    <div class="form-hint">Refundable, collected at check-in. Set to 0 to hide.</div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Check-in Time</label>
+                    <input type="text" class="form-control" id="checkInTime" placeholder="2:00 PM">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Check-out Time</label>
+                    <input type="text" class="form-control" id="checkOutTime" placeholder="12:00 PM">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- GCash -->
+            <div class="card settings-section" id="s-gcash">
+              <div class="card-header"><span class="card-title"><i class="fa-solid fa-mobile-screen"></i> GCash</span></div>
+              <div class="card-body">
+                <div class="settings-grid">
+                  <div class="form-group">
+                    <label class="form-label">Account Name</label>
+                    <input type="text" class="form-control" id="gcashName" placeholder="Juan dela Cruz">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Mobile Number</label>
+                    <input type="text" class="form-control" id="gcashNumber" placeholder="0912 345 6789">
+                  </div>
+                  <div class="form-group full">
+                    <label class="form-label">QR Code Image URL</label>
+                    <div class="input-with-btn">
+                      <input type="url" class="form-control" id="gcashQrUrl" placeholder="https://res.cloudinary.com/…">
+                      <label class="btn btn-ghost" style="cursor:pointer;white-space:nowrap;">
+                        <i class="fa-solid fa-upload"></i> Upload
+                        <input type="file" id="gcashQrFile" accept="image/*" style="display:none;">
+                      </label>
+                    </div>
+                    <div class="qr-preview" id="gcashQrPreview"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Maya -->
+            <div class="card settings-section" id="s-maya">
+              <div class="card-header"><span class="card-title"><i class="fa-solid fa-mobile-screen"></i> Maya / PayMaya</span></div>
+              <div class="card-body">
+                <div class="settings-grid">
+                  <div class="form-group">
+                    <label class="form-label">Account Name</label>
+                    <input type="text" class="form-control" id="mayaName" placeholder="Juan dela Cruz">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Mobile Number</label>
+                    <input type="text" class="form-control" id="mayaNumber" placeholder="0912 345 6789">
+                  </div>
+                  <div class="form-group full">
+                    <label class="form-label">QR Code Image URL</label>
+                    <div class="input-with-btn">
+                      <input type="url" class="form-control" id="mayaQrUrl" placeholder="https://res.cloudinary.com/…">
+                      <label class="btn btn-ghost" style="cursor:pointer;white-space:nowrap;">
+                        <i class="fa-solid fa-upload"></i> Upload
+                        <input type="file" id="mayaQrFile" accept="image/*" style="display:none;">
+                      </label>
+                    </div>
+                    <div class="qr-preview" id="mayaQrPreview"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bank Transfer -->
+            <div class="card settings-section" id="s-bank">
+              <div class="card-header"><span class="card-title"><i class="fa-solid fa-building-columns"></i> Bank Transfer</span></div>
+              <div class="card-body">
+                <div class="settings-grid">
+                  <div class="form-group">
+                    <label class="form-label">Bank Name</label>
+                    <input type="text" class="form-control" id="bankName" placeholder="BDO / BPI / Metrobank">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Account Name</label>
+                    <input type="text" class="form-control" id="bankAccountName" placeholder="Juan dela Cruz">
+                  </div>
+                  <div class="form-group full">
+                    <label class="form-label">Account Number</label>
+                    <input type="text" class="form-control" id="bankAccount" placeholder="1234 5678 9012">
+                  </div>
+                  <div class="form-group full">
+                    <label class="form-label">QR Code Image URL</label>
+                    <div class="input-with-btn">
+                      <input type="url" class="form-control" id="bankQrUrl" placeholder="https://res.cloudinary.com/…">
+                      <label class="btn btn-ghost" style="cursor:pointer;white-space:nowrap;">
+                        <i class="fa-solid fa-upload"></i> Upload
+                        <input type="file" id="bankQrFile" accept="image/*" style="display:none;">
+                      </label>
+                    </div>
+                    <div class="qr-preview" id="bankQrPreview"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Email SMTP -->
+            <div class="card settings-section" id="s-email">
+              <div class="card-header"><span class="card-title"><i class="fa-solid fa-envelope"></i> Email Integration (SMTP)</span></div>
+              <div class="card-body">
+                <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#1d4ed8;">
+                  <i class="fa-solid fa-circle-info"></i>
+                  These credentials are kept private — they are never sent to the booking website.
+                  Use the client's dedicated Gmail + App Password.
+                </div>
+                <div class="settings-grid">
+                  <div class="form-group full">
+                    <label class="form-label">Gmail Address (Sender)</label>
+                    <input type="email" class="form-control" id="smtpEmail" placeholder="bookings@gmail.com">
+                    <div class="form-hint">Emails to guests are sent from this address.</div>
+                  </div>
+                  <div class="form-group full">
+                    <label class="form-label">Gmail App Password</label>
+                    <div class="masked-field">
+                      <input type="password" class="form-control" id="smtpPassword" placeholder="Leave blank to keep existing">
+                      <button type="button" class="masked-toggle" data-target="smtpPassword">
+                        <i class="fa-regular fa-eye"></i>
+                      </button>
+                    </div>
+                    <div class="form-hint">Leave blank to keep the existing password. Only fill in to change it.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Admin Notification Email -->
+            <div class="card settings-section" id="s-notifications">
+              <div class="card-header"><span class="card-title"><i class="fa-solid fa-bell"></i> Admin Notification Email</span></div>
+              <div class="card-body">
+                <div style="background:#fefce8;border:1px solid #fde68a;border-radius:6px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#92400e;">
+                  <i class="fa-solid fa-circle-info"></i>
+                  When a guest books, the admin notification is sent to this address — separate from the Gmail sender.
+                  This way your phone will ring for new bookings. Leave blank to use the Gmail address above.
+                </div>
+                <div class="settings-grid">
+                  <div class="form-group full">
+                    <label class="form-label">Admin Notification Email</label>
+                    <input type="email" class="form-control" id="notificationEmail" placeholder="owner@gmail.com">
+                    <div class="form-hint">Where YOU receive booking alerts. Can be a personal Gmail, Yahoo, or any email address.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Telegram -->
+            <div class="card settings-section" id="s-telegram">
+              <div class="card-header"><span class="card-title"><i class="fa-brands fa-telegram"></i> Telegram Notifications (Optional)</span></div>
+              <div class="card-body">
+                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#166534;">
+                  <i class="fa-solid fa-circle-info"></i>
+                  Optional. When configured, new booking alerts are sent to the admin's Telegram.
+                  Leave both blank to disable.
+                </div>
+                <div class="settings-grid">
+                  <div class="form-group full">
+                    <label class="form-label">Bot Token</label>
+                    <div class="masked-field">
+                      <input type="password" class="form-control" id="telegramToken" placeholder="Leave blank to keep existing">
+                      <button type="button" class="masked-toggle" data-target="telegramToken">
+                        <i class="fa-regular fa-eye"></i>
+                      </button>
+                    </div>
+                    <div class="form-hint">From @BotFather. Leave blank to keep existing, or enter new value to update.</div>
+                  </div>
+                  <div class="form-group full">
+                    <label class="form-label">Chat ID</label>
+                    <input type="text" class="form-control" id="telegramChatId" placeholder="-100123456789">
+                    <div class="form-hint">Get this from @userinfobot or the getUpdates API.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Policies -->
+            <div class="card settings-section" id="s-policies">
+              <div class="card-header"><span class="card-title"><i class="fa-solid fa-file-contract"></i> Booking Policies</span></div>
+              <div class="card-body">
+                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#166534;">
+                  <i class="fa-solid fa-circle-info"></i>
+                  These policies appear on the booking website. Use a new line for each point. Lines starting with "- " become bullet points.
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Booking Policy</label>
+                  <textarea class="form-control" id="policyBooking" rows="7" placeholder="Enter your booking rules, e.g.:&#10;- A reservation fee is required to confirm your booking&#10;- Payment must be sent within 24 hours of reservation"></textarea>
+                  <div class="form-hint">Shown on the Booking Policy page of your booking site.</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Cancellation Policy</label>
+                  <textarea class="form-control" id="policyCancellation" rows="7" placeholder="Enter your cancellation terms, e.g.:&#10;- More than 7 days before check-in: full refund&#10;- 3–7 days: 50% refund&#10;- Less than 3 days: no refund"></textarea>
+                  <div class="form-hint">Shown on the Cancellation Policy page.</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">House Rules</label>
+                  <textarea class="form-control" id="policyHouseRules" rows="6" placeholder="e.g.:&#10;- No smoking inside the property&#10;- Quiet hours from 10:00 PM to 6:00 AM&#10;- Guests are responsible for any damages"></textarea>
+                  <div class="form-hint">Shown on the Booking Policy page. Each line starting with "- " becomes a bullet.</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Check-in / Check-out Policy</label>
+                  <textarea class="form-control" id="policyCheckinOut" rows="5" placeholder="e.g.:&#10;- Check-in: 2:00 PM&#10;- Check-out: 12:00 PM noon&#10;- Early check-in subject to availability, contact us in advance"></textarea>
+                  <div class="form-hint">Specific check-in and check-out instructions for your guests.</div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /settings-sections -->
+        </div><!-- /settings-layout -->
+      </div><!-- /page-body -->
+
+      <!-- Save bar -->
+      <div class="save-bar">
+        <span id="save-status" style="font-size:13px;color:var(--muted);"></span>
+        <button class="btn btn-primary" id="save-btn">
+          <i class="fa-solid fa-floppy-disk"></i>
+          <span id="save-btn-text">Save Changes</span>
+          <span id="save-spinner" class="spinner" style="display:none;width:14px;height:14px;border-width:2px;border-color:rgba(255,255,255,.3);border-top-color:#fff;"></span>
+        </button>
+      </div>
+    </div><!-- /settings-content -->
+
+  </main>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script type="module">
+  import { requireAuth, adminSignOut, getAdminFirebase } from './admin-auth.js';
+
+  // Mobile sidebar
+  document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('open');
+  });
+  document.getElementById('sidebar-overlay').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  });
+
+  // Auth guard
+  const { user, clientId } = await requireAuth();
+  document.getElementById('admin-email').textContent = user.email;
+  document.getElementById('signout-btn').addEventListener('click', adminSignOut);
+
+  // Settings nav click scrolls to section
+  document.querySelectorAll('.settings-nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      const target = document.getElementById(item.dataset.target);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  // Masked field toggles
+  document.querySelectorAll('.masked-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.dataset.target);
+      const icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'fa-regular fa-eye';
+      }
+    });
+  });
+
+  // Cloudinary signed upload for QR images (admin-authenticated)
+  async function uploadQr(file) {
+    const token = await user.getIdToken();
+    const sigRes = await fetch('/.netlify/functions/get-upload-signature', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ clientId, type: 'public' }),
+    });
+    if (!sigRes.ok) throw new Error('Could not get upload signature');
+    const sig = await sigRes.json();
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('api_key', sig.apiKey);
+    fd.append('timestamp', sig.timestamp);
+    fd.append('signature', sig.signature);
+    fd.append('folder', sig.folder);
+    fd.append('allowed_formats', sig.allowedFormats);
+    fd.append('unique_filename', 'true');
+    fd.append('overwrite', 'false');
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, { method: 'POST', body: fd });
+    if (!res.ok) throw new Error('Upload failed');
+    const data = await res.json();
+    return data.secure_url;
+  }
+
+  function wireQrUpload(fileInputId, urlInputId, previewId) {
+    document.getElementById(fileInputId).addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const urlInput = document.getElementById(urlInputId);
+      urlInput.placeholder = 'Uploading…';
+      urlInput.disabled = true;
+      try {
+        const url = await uploadQr(file);
+        urlInput.value = url;
+        showQrPreview(previewId, url);
+        showToast('QR image uploaded!', 'success');
+      } catch (err) {
+        showToast('Upload failed: ' + err.message, 'error');
+      } finally {
+        urlInput.placeholder = 'https://res.cloudinary.com/…';
+        urlInput.disabled = false;
+      }
+    });
+
+    // Show preview when URL is pasted manually
+    document.getElementById(urlInputId).addEventListener('blur', () => {
+      showQrPreview(previewId, document.getElementById(urlInputId).value);
+    });
+  }
+
+  function showQrPreview(previewId, url) {
+    const el = document.getElementById(previewId);
+    if (url && isValidUrl(url)) {
+      el.innerHTML = `<img src="${esc(url)}" alt="QR Preview" onerror="this.parentElement.innerHTML=''">`;
+    } else {
+      el.innerHTML = '';
+    }
+  }
+
+  wireQrUpload('gcashQrFile', 'gcashQrUrl', 'gcashQrPreview');
+  wireQrUpload('mayaQrFile',  'mayaQrUrl',  'mayaQrPreview');
+  wireQrUpload('bankQrFile',  'bankQrUrl',  'bankQrPreview');
+
+  // ---- Default policy text (matches booking site fallback HTML) ----
+  const DEFAULT_POLICY_BOOKING = `A non-refundable reservation fee is required to confirm your booking. This fee will be deducted from your total balance upon check-in.
+
+How to Reserve:
+- Select your preferred room and dates on the booking page
+- Fill in your guest details
+- Choose any add-ons you want
+- Send the reservation fee via GCash, PayMaya, or bank transfer
+- Upload your payment screenshot
+- Wait for confirmation via email (usually within 1–2 hours)
+
+Payment Methods:
+- GCash
+- PayMaya
+- Bank Transfer
+
+Cash payments upon check-in are accepted for the remaining balance only.
+
+Bookings are confirmed only after your payment screenshot has been verified. You will receive a confirmation email within 1–2 hours.`;
+
+  const DEFAULT_POLICY_CANCELLATION = `The reservation fee paid to hold your dates is non-refundable under all circumstances.
+
+Cancellation by Guest:
+- More than 7 days before check-in: Full refund of any balance paid beyond the reservation fee
+- 3–7 days before check-in: 50% refund of any balance paid beyond the reservation fee
+- Less than 3 days before check-in: No refund
+- No-show: No refund
+
+To cancel your booking, contact us directly via phone or the email you received in your confirmation. Please provide your booking reference number.
+
+Rescheduling: We allow free rescheduling if requested at least 7 days before your original check-in date, subject to room availability.
+
+In the rare event that we need to cancel your booking, you will receive a full refund including the reservation fee.
+
+Approved refunds are processed within 3–5 business days via the same payment method used to book.`;
+
+  const DEFAULT_POLICY_HOUSE_RULES = `- No smoking inside the property
+- Quiet hours from 10:00 PM to 6:00 AM
+- Pets are only allowed in pet-friendly rooms (additional fee applies)
+- Guests are responsible for any damages to the property`;
+
+  const DEFAULT_POLICY_CHECKIN_OUT = `- Check-in time: 2:00 PM
+- Check-out time: 12:00 PM (noon)
+- Early check-in or late check-out may be accommodated subject to availability`;
+
+  // ---- Load settings ----
+  async function loadSettings() {
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('/.netlify/functions/get-settings-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ clientId }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Load failed');
+      const { public: pub, private: priv } = await res.json();
+
+      // Populate public fields
+      setVal('companyName',        pub.companyName        || '');
+      setVal('address',            pub.address            || '');
+      setVal('phone',              pub.phone              || '');
+      setVal('pub-email',          pub.email              || '');
+      setVal('bookingWebsiteUrl',  pub.bookingWebsiteUrl  || '');
+      setVal('downPaymentAmount',  pub.downPaymentAmount  ?? '');
+      setVal('securityDeposit',    pub.securityDeposit    ?? '');
+      setVal('checkInTime',        pub.checkInTime        || '');
+      setVal('checkOutTime',       pub.checkOutTime       || '');
+      setVal('gcashName',          pub.gcashName          || '');
+      setVal('gcashNumber',        pub.gcashNumber        || '');
+      setVal('gcashQrUrl',         pub.gcashQrUrl         || '');
+      setVal('mayaName',           pub.mayaName           || '');
+      setVal('mayaNumber',         pub.mayaNumber         || '');
+      setVal('mayaQrUrl',          pub.mayaQrUrl          || '');
+      setVal('bankName',           pub.bankName           || '');
+      setVal('bankAccountName',    pub.bankAccountName    || '');
+      setVal('bankAccount',        pub.bankAccount        || '');
+      setVal('bankQrUrl',          pub.bankQrUrl          || '');
+      setVal('policyBooking',      pub.policyBooking      || DEFAULT_POLICY_BOOKING);
+      setVal('policyCancellation', pub.policyCancellation || DEFAULT_POLICY_CANCELLATION);
+      setVal('policyHouseRules',   pub.policyHouseRules   || DEFAULT_POLICY_HOUSE_RULES);
+      setVal('policyCheckinOut',   pub.policyCheckinOut   || DEFAULT_POLICY_CHECKIN_OUT);
+
+      // QR previews
+      showQrPreview('gcashQrPreview', pub.gcashQrUrl);
+      showQrPreview('mayaQrPreview',  pub.mayaQrUrl);
+      showQrPreview('bankQrPreview',  pub.bankQrUrl);
+
+      // Populate private fields (masked values come from server)
+      setVal('smtpEmail',         priv.smtpEmail         || '');
+      setVal('smtpPassword',      priv.smtpPassword       || ''); // '••••••••' if set, '' if not
+      setVal('notificationEmail', priv.notificationEmail  || '');
+      setVal('telegramToken',     priv.telegramToken      || ''); // '••••••••' if set, '' if not
+      setVal('telegramChatId',    priv.telegramChatId     || '');
+
+      // Update sidebar brand name
+      if (pub.companyName) {
+        document.getElementById('sidebar-brand').textContent = pub.companyName;
+        document.title = `Settings — ${pub.companyName}`;
+      }
+
+      document.getElementById('settings-loading').style.display = 'none';
+      document.getElementById('settings-content').style.display = 'block';
+
+    } catch (err) {
+      document.getElementById('settings-loading').innerHTML = `
+        <div class="empty-state">
+          <i class="fa-solid fa-circle-exclamation" style="color:var(--danger);"></i>
+          <p>Failed to load settings: ${esc(err.message)}</p>
+          <button class="btn btn-primary mt-16" onclick="location.reload()">Retry</button>
+        </div>`;
+    }
+  }
+
+  // ---- Save settings ----
+  document.getElementById('save-btn').addEventListener('click', saveSettings);
+
+  async function saveSettings() {
+    const btn     = document.getElementById('save-btn');
+    const btnText = document.getElementById('save-btn-text');
+    const spinner = document.getElementById('save-spinner');
+    const status  = document.getElementById('save-status');
+
+    btn.disabled = true;
+    btnText.textContent = 'Saving…';
+    spinner.style.display = 'inline-block';
+    status.textContent = '';
+
+    try {
+      const token = await user.getIdToken(true); // force refresh
+
+      const pub = {
+        companyName:       getVal('companyName'),
+        address:           getVal('address'),
+        email:             getVal('pub-email'),
+        phone:             getVal('phone'),
+        bookingWebsiteUrl: getVal('bookingWebsiteUrl'),
+        downPaymentAmount: Number(getVal('downPaymentAmount')) || 0,
+        securityDeposit:   Number(getVal('securityDeposit'))   || 0,
+        checkInTime:       getVal('checkInTime'),
+        checkOutTime:      getVal('checkOutTime'),
+        gcashName:         getVal('gcashName'),
+        gcashNumber:       getVal('gcashNumber'),
+        gcashQrUrl:        getVal('gcashQrUrl'),
+        mayaName:          getVal('mayaName'),
+        mayaNumber:        getVal('mayaNumber'),
+        mayaQrUrl:         getVal('mayaQrUrl'),
+        bankName:          getVal('bankName'),
+        bankAccountName:   getVal('bankAccountName'),
+        bankAccount:       getVal('bankAccount'),
+        bankQrUrl:          getVal('bankQrUrl'),
+        policyBooking:      getVal('policyBooking'),
+        policyCancellation: getVal('policyCancellation'),
+        policyHouseRules:   getVal('policyHouseRules'),
+        policyCheckinOut:   getVal('policyCheckinOut'),
+      };
+
+      // For private: send values as-is. Server skips masked values (••••••••).
+      const priv = {
+        smtpEmail:         getVal('smtpEmail'),
+        smtpPassword:      getVal('smtpPassword'),   // '' if unchanged, mask if still masked
+        notificationEmail: getVal('notificationEmail'),
+        telegramToken:     getVal('telegramToken'),
+        telegramChatId:    getVal('telegramChatId'),
+      };
+
+      const res = await fetch('/.netlify/functions/save-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ clientId, public: pub, private: priv }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Save failed');
+
+      showToast('Settings saved successfully!', 'success');
+      status.textContent = 'Saved ' + new Date().toLocaleTimeString('en-PH', { timeZone: 'Asia/Manila' });
+
+      // Reload to reflect any masked field updates (e.g., new password now shows mask)
+      setTimeout(loadSettings, 800);
+
+    } catch (err) {
+      showToast('Save failed: ' + err.message, 'error');
+      status.textContent = 'Save failed';
+    } finally {
+      btn.disabled = false;
+      btnText.textContent = 'Save Changes';
+      spinner.style.display = 'none';
+    }
+  }
+
+  // ---- Helpers ----
+  function setVal(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  }
+
+  function getVal(id) {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+
+  function isValidUrl(url) {
+    try { new URL(url); return true; } catch { return false; }
+  }
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function showToast(msg, type = 'info') {
+    const tc = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' };
+    t.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i> ${esc(msg)}`;
+    tc.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 4000);
+  }
+
+  // Initialize
+  loadSettings();
+</script>
+</body>
+</html>
+

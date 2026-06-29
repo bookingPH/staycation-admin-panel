@@ -1,0 +1,225 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amenities — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="./admin-styles.css">
+</head>
+<body>
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name" id="sidebar-brand">Booking Admin</div>
+      <div class="sidebar-brand-tag">Management Panel</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="./dashboard.html"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a href="./bookings.html"><i class="fa-solid fa-calendar-check"></i> Bookings</a>
+      <a href="./calendar.html"><i class="fa-solid fa-calendar-days"></i> Calendar</a>
+      <a href="./blocking.html"><i class="fa-solid fa-ban"></i> Date Blocking</a>
+      <a href="./units.html"><i class="fa-solid fa-building"></i> Units</a>
+      <a href="./addons.html"><i class="fa-solid fa-circle-plus"></i> Add-ons</a>
+      <a href="./amenities.html" class="active"><i class="fa-solid fa-star"></i> Amenities</a>
+      <a href="./holiday-rates.html"><i class="fa-solid fa-tag"></i> Holiday Rates</a>
+      <a href="./expenses.html"><i class="fa-solid fa-receipt"></i> Expenses</a>
+      <a href="./design.html"><i class="fa-solid fa-palette"></i> Design</a>
+      <a href="./settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-email" id="admin-email">—</div>
+      <button class="btn-signout" id="signout-btn"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-header-left">
+        <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Amenities</span>
+      </div>
+      <button class="btn btn-primary" id="add-btn"><i class="fa-solid fa-plus"></i> Add Amenity</button>
+    </header>
+    <div class="page-body">
+      <p style="color:var(--muted);font-size:13px;margin-bottom:20px;">Define what's included in your property — these appear on the booking website.</p>
+      <div id="amenities-container">
+        <div class="loading-state"><span class="spinner"></span></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Add Amenity</div>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Icon <span class="required">*</span></label>
+        <div class="icon-picker-grid" id="icon-picker"></div>
+        <input type="hidden" id="selected-icon" value="fa-star">
+        <div style="margin-top:6px;font-size:12px;color:var(--muted);">Selected: <i id="icon-preview" class="fa-solid fa-star"></i> <span id="icon-name-display">fa-star</span></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Name <span class="required">*</span></label>
+        <input type="text" class="form-control" id="amenity-name" placeholder="e.g. Swimming Pool">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input type="text" class="form-control" id="amenity-desc" placeholder="e.g. Infinity pool with ocean view">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="save-btn"><i class="fa-solid fa-floppy-disk"></i> Save Amenity</button>
+      <button class="btn btn-ghost" id="cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script type="module">
+  import { requireAuth, adminSignOut, getAdminFirebase } from './admin-auth.js';
+  import {
+    collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, getDoc,
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('open');
+  });
+  document.getElementById('sidebar-overlay').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  });
+
+  const { user, clientId } = await requireAuth();
+  document.getElementById('admin-email').textContent = user.email;
+  document.getElementById('signout-btn').addEventListener('click', adminSignOut);
+  const { db } = getAdminFirebase();
+
+  try {
+    const pub = await getDoc(doc(db, 'clients', clientId, 'settings', 'public'));
+    if (pub.exists() && pub.data().companyName) document.getElementById('sidebar-brand').textContent = pub.data().companyName;
+  } catch (_) {}
+
+  const ICONS = [
+    'fa-person-swimming','fa-wifi','fa-tv','fa-snowflake','fa-utensils','fa-car',
+    'fa-shower','fa-bath','fa-fire','fa-shield-halved','fa-tree','fa-umbrella-beach',
+    'fa-dumbbell','fa-gamepad','fa-coffee','fa-dog','fa-baby','fa-bicycle',
+    'fa-bolt','fa-fan','fa-music','fa-camera','fa-bed','fa-couch',
+    'fa-blender','fa-washer','fa-temperature-half','fa-key','fa-star','fa-heart',
+  ];
+
+  let selectedIcon = 'fa-star';
+
+  const pickerGrid = document.getElementById('icon-picker');
+  ICONS.forEach(ic => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'icon-picker-btn' + (ic === selectedIcon ? ' selected' : '');
+    btn.title = ic;
+    btn.innerHTML = `<i class="fa-solid ${ic}"></i>`;
+    btn.addEventListener('click', () => {
+      pickerGrid.querySelectorAll('.icon-picker-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedIcon = ic;
+      document.getElementById('selected-icon').value = ic;
+      document.getElementById('icon-preview').className = `fa-solid ${ic}`;
+      document.getElementById('icon-name-display').textContent = ic;
+    });
+    pickerGrid.appendChild(btn);
+  });
+
+  // Modal
+  function openModal() {
+    document.getElementById('amenity-name').value = '';
+    document.getElementById('amenity-desc').value = '';
+    pickerGrid.querySelectorAll('.icon-picker-btn').forEach(b => b.classList.remove('selected'));
+    pickerGrid.querySelector('.icon-picker-btn').classList.add('selected');
+    selectedIcon = ICONS[0];
+    document.getElementById('icon-preview').className = `fa-solid ${ICONS[0]}`;
+    document.getElementById('icon-name-display').textContent = ICONS[0];
+    document.getElementById('modal-backdrop').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('amenity-name').focus();
+  }
+
+  function closeModal() {
+    document.getElementById('modal-backdrop').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('add-btn').addEventListener('click', openModal);
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('modal-backdrop').addEventListener('click', e => { if (e.target === document.getElementById('modal-backdrop')) closeModal(); });
+
+  document.getElementById('save-btn').addEventListener('click', async () => {
+    const name = document.getElementById('amenity-name').value.trim();
+    const desc = document.getElementById('amenity-desc').value.trim();
+    if (!name) { showToast('Name is required.', 'error'); return; }
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Saving…';
+    try {
+      await addDoc(collection(db, 'clients', clientId, 'amenities'), {
+        name, description: desc, icon: selectedIcon,
+        createdAt: serverTimestamp(),
+      });
+      showToast('Amenity added!', 'success');
+      closeModal();
+    } catch (err) {
+      showToast('Save failed: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Amenity';
+    }
+  });
+
+  // Real-time list
+  onSnapshot(collection(db, 'clients', clientId, 'amenities'), (snap) => {
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const container = document.getElementById('amenities-container');
+    if (items.length === 0) {
+      container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-star" style="font-size:48px;"></i><p>No amenities yet. Click "Add Amenity" to get started.</p></div>`;
+      return;
+    }
+    container.innerHTML = `<div class="amenities-grid-admin">${items.map(a => `
+      <div class="amenity-card-admin">
+        <div class="amenity-card-icon"><i class="fa-solid ${esc(a.icon || 'fa-star')}"></i></div>
+        <div class="amenity-card-name">${esc(a.name)}</div>
+        ${a.description ? `<div class="amenity-card-desc">${esc(a.description)}</div>` : ''}
+        <button class="amenity-card-delete" data-id="${esc(a.id)}"><i class="fa-solid fa-trash"></i> Delete</button>
+      </div>
+    `).join('')}</div>`;
+
+    container.querySelectorAll('.amenity-card-delete').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this amenity?')) return;
+        try {
+          await deleteDoc(doc(db, 'clients', clientId, 'amenities', btn.dataset.id));
+          showToast('Amenity deleted.', 'success');
+        } catch (err) { showToast('Delete failed: ' + err.message, 'error'); }
+      });
+    });
+  });
+
+  function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function showToast(msg, type = 'info') {
+    const tc = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    const icons = { success:'fa-circle-check', error:'fa-circle-exclamation', info:'fa-circle-info' };
+    t.innerHTML = `<i class="fa-solid ${icons[type]}"></i> ${esc(msg)}`;
+    tc.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); }, 4000);
+  }
+</script>
+</body>
+</html>
+

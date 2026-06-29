@@ -1,0 +1,355 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Date Blocking — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="./admin-styles.css">
+  <style>
+    .blocking-layout { display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
+    @media(max-width:900px){ .blocking-layout { grid-template-columns: 1fr; } }
+
+    /* Mini calendar */
+    .mini-cal { user-select: none; }
+    .mini-cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .mini-cal-nav button { background:none;border:1px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:13px; }
+    .mini-cal-nav button:hover { background:var(--bg); }
+    .mini-cal-month { font-size:15px;font-weight:700; }
+    .mini-cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+    .mini-cal-dow { text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:4px 0;text-transform:uppercase; }
+    .mini-cal-day {
+      aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+      font-size:12.5px; border-radius:6px; cursor:pointer; transition:all .1s;
+    }
+    .mini-cal-day:hover:not(.other-month):not(.blocked-day):not(.booking-day){ background:#f1f5f9; }
+    .mini-cal-day.other-month { color:#c8d0db; cursor:default; }
+    .mini-cal-day.today { font-weight:700; color:var(--primary); }
+    .mini-cal-day.blocked-day { background:#fee2e2; color:#991b1b; font-weight:600; }
+    .mini-cal-day.booking-day { background:#fef3c7; color:#92400e; font-weight:600; }
+    .mini-cal-day.confirmed-day { background:#d1fae5; color:#065f46; font-weight:600; }
+  </style>
+</head>
+<body>
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name" id="sidebar-brand">Booking Admin</div>
+      <div class="sidebar-brand-tag">Management Panel</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="./dashboard.html"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a href="./bookings.html"><i class="fa-solid fa-calendar-check"></i> Bookings</a>
+      <a href="./calendar.html"><i class="fa-solid fa-calendar-days"></i> Calendar</a>
+      <a href="./blocking.html" class="active"><i class="fa-solid fa-ban"></i> Date Blocking</a>
+      <a href="./units.html"><i class="fa-solid fa-building"></i> Units</a>
+      <a href="./addons.html"><i class="fa-solid fa-circle-plus"></i> Add-ons</a>
+      <a href="./amenities.html"><i class="fa-solid fa-star"></i> Amenities</a>
+      <a href="./holiday-rates.html"><i class="fa-solid fa-tag"></i> Holiday Rates</a>
+      <a href="./expenses.html"><i class="fa-solid fa-receipt"></i> Expenses</a>
+      <a href="./design.html"><i class="fa-solid fa-palette"></i> Design</a>
+      <a href="./settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-email" id="admin-email">—</div>
+      <button class="btn-signout" id="signout-btn"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-header-left">
+        <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Manual Date Blocking</span>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <div class="blocking-layout">
+
+        <!-- Left: Form + Active Blocks -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <!-- Form -->
+          <div class="card">
+            <div class="card-header"><span class="card-title">Block Schedule</span></div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Target Unit</label>
+                <select class="form-control" id="b-unit">
+                  <option value="all">— Apply to All Units —</option>
+                </select>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group">
+                  <label class="form-label">Start Date <span class="required">*</span></label>
+                  <input type="date" class="form-control" id="b-start">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">End Date (Checkout) <span class="required">*</span></label>
+                  <input type="date" class="form-control" id="b-end">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Blocking Reason</label>
+                <select class="form-control" id="b-reason">
+                  <option value="maintenance">Maintenance &amp; Repair Work</option>
+                  <option value="cleaning">Cleaning / Preparation</option>
+                  <option value="owner">Owner Personal Use</option>
+                  <option value="event">Special Event</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Additional Remarks</label>
+                <textarea class="form-control" id="b-remarks" rows="2" placeholder="Optional notes for reference…"></textarea>
+              </div>
+              <button class="btn btn-primary btn-block" id="save-block-btn">
+                <i class="fa-solid fa-lock"></i> Save Blocked Period
+              </button>
+            </div>
+          </div>
+
+          <!-- Active blocks -->
+          <div class="card">
+            <div class="card-header"><span class="card-title">Active Block Schedules</span></div>
+            <div id="blocks-list"><div class="loading-state"><span class="spinner"></span></div></div>
+          </div>
+        </div>
+
+        <!-- Right: Calendar -->
+        <div class="card calendar-container">
+          <div class="card-header" style="border-bottom:none;padding-bottom:0;">
+            <span class="card-title"><i class="fa-solid fa-calendar"></i> Visual Blocking Planner</span>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-ghost btn-sm" id="cal-prev"><i class="fa-solid fa-chevron-left"></i></button>
+              <button class="btn btn-ghost btn-sm" id="cal-today">Today</button>
+              <button class="btn btn-ghost btn-sm" id="cal-next"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="mini-cal">
+              <div class="mini-cal-nav">
+                <span class="mini-cal-month" id="cal-month-label">—</span>
+              </div>
+              <div class="mini-cal-grid" id="cal-dow"></div>
+              <div class="mini-cal-grid" id="cal-grid"></div>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:5px;font-size:12px;"><span style="width:12px;height:12px;border-radius:3px;background:#fee2e2;display:inline-block;"></span> Blocked</div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:12px;"><span style="width:12px;height:12px;border-radius:3px;background:#fef3c7;display:inline-block;"></span> Pending</div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:12px;"><span style="width:12px;height:12px;border-radius:3px;background:#d1fae5;display:inline-block;"></span> Confirmed</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script type="module">
+  import { requireAuth, adminSignOut, getAdminFirebase } from './admin-auth.js';
+  import {
+    collection, onSnapshot, addDoc, deleteDoc, getDocs, doc, serverTimestamp,
+    orderBy, query, getDoc,
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('open');
+  });
+  document.getElementById('sidebar-overlay').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  });
+
+  const { user, clientId } = await requireAuth();
+  document.getElementById('admin-email').textContent = user.email;
+  document.getElementById('signout-btn').addEventListener('click', adminSignOut);
+  const { db } = getAdminFirebase();
+
+  try {
+    const pub = await getDoc(doc(db, 'clients', clientId, 'settings', 'public'));
+    if (pub.exists() && pub.data().companyName) document.getElementById('sidebar-brand').textContent = pub.data().companyName;
+  } catch (_) {}
+
+  // Load units
+  let units = [];
+  try {
+    const snap = await getDocs(collection(db, 'clients', clientId, 'units'));
+    units = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const sel = document.getElementById('b-unit');
+    units.forEach(u => { const o = document.createElement('option'); o.value = u.id; o.textContent = u.name; sel.appendChild(o); });
+  } catch (_) {}
+
+  let allBlocks = [], allBookings = [];
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+
+  // Listen to blocked dates
+  onSnapshot(query(collection(db, 'clients', clientId, 'blocked_dates'), orderBy('startDate', 'desc')), (snap) => {
+    allBlocks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderBlockList();
+    renderCalendar();
+  });
+
+  // Listen to bookings
+  onSnapshot(collection(db, 'clients', clientId, 'bookings'), (snap) => {
+    allBookings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderCalendar();
+  });
+
+  // Save block
+  document.getElementById('save-block-btn').addEventListener('click', async () => {
+    const unitId  = document.getElementById('b-unit').value;
+    const start   = document.getElementById('b-start').value;
+    const end     = document.getElementById('b-end').value;
+    const reason  = document.getElementById('b-reason').value;
+    const remarks = document.getElementById('b-remarks').value.trim();
+    if (!start || !end) { showToast('Start and end dates are required.', 'error'); return; }
+    if (end < start) { showToast('End date must be after start date.', 'error'); return; }
+    const unitName = unitId === 'all' ? 'All Units' : (units.find(u => u.id === unitId)?.name || unitId);
+    const btn = document.getElementById('save-block-btn');
+    btn.disabled = true;
+    try {
+      await addDoc(collection(db, 'clients', clientId, 'blocked_dates'), {
+        unitId, unitName, startDate: start, endDate: end, reason, remarks, createdAt: serverTimestamp(),
+      });
+      showToast('Blocked period saved!', 'success');
+      document.getElementById('b-start').value = '';
+      document.getElementById('b-end').value = '';
+      document.getElementById('b-remarks').value = '';
+    } catch (err) { showToast('Save failed: ' + err.message, 'error'); }
+    finally { btn.disabled = false; }
+  });
+
+  function renderBlockList() {
+    const el = document.getElementById('blocks-list');
+    if (allBlocks.length === 0) {
+      el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">No active block schedules.</div>`;
+      return;
+    }
+    el.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Unit</th><th>Blocked Period</th><th>Reason</th><th></th></tr></thead>
+      <tbody>${allBlocks.map(b => `
+        <tr>
+          <td style="font-size:12px;color:var(--muted);">${esc(b.unitName || b.unitId)}</td>
+          <td style="font-size:13px;">${esc(b.startDate)} → ${esc(b.endDate)}</td>
+          <td style="font-size:12px;">${esc(b.reason)}</td>
+          <td><button class="btn btn-sm btn-ghost" style="color:var(--danger);" data-id="${esc(b.id)}"><i class="fa-solid fa-trash"></i></button></td>
+        </tr>
+      `).join('')}</tbody>
+    </table></div>`;
+    el.querySelectorAll('[data-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Remove this block?')) return;
+        try { await deleteDoc(doc(db, 'clients', clientId, 'blocked_dates', btn.dataset.id)); showToast('Block removed.', 'success'); }
+        catch (err) { showToast('Delete failed.', 'error'); }
+      });
+    });
+  }
+
+  // Calendar
+  let calYear, calMonth;
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+  calYear = now.getFullYear(); calMonth = now.getMonth();
+
+  document.getElementById('cal-prev').addEventListener('click', () => { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); });
+  document.getElementById('cal-next').addEventListener('click', () => { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); });
+  document.getElementById('cal-today').addEventListener('click', () => { calYear = now.getFullYear(); calMonth = now.getMonth(); renderCalendar(); });
+
+  const DOWS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  // Build set of blocked dates and booking dates for current view month
+  function renderCalendar() {
+    document.getElementById('cal-month-label').textContent = `${MONTHS[calMonth]} ${calYear}`;
+
+    // DOW headers (once)
+    if (!document.getElementById('cal-dow').children.length) {
+      DOWS.forEach(d => { const el = document.createElement('div'); el.className = 'mini-cal-dow'; el.textContent = d; document.getElementById('cal-dow').appendChild(el); });
+    }
+
+    // Build set of dates in this month
+    const blockedDates = new Set();
+    const pendingDates = new Set();
+    const confirmedDates = new Set();
+
+    allBlocks.forEach(b => {
+      eachDate(b.startDate, b.endDate, dateStr => { if (dateStr.startsWith(`${calYear}-${String(calMonth+1).padStart(2,'0')}`)) blockedDates.add(dateStr); });
+    });
+    allBookings.forEach(b => {
+      const set = b.status === 'confirmed' ? confirmedDates : pendingDates;
+      eachDate(b.checkIn, b.checkOut, dateStr => { if (dateStr.startsWith(`${calYear}-${String(calMonth+1).padStart(2,'0')}`)) set.add(dateStr); });
+    });
+
+    const first = new Date(calYear, calMonth, 1);
+    const startDow = first.getDay();
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+    const grid = document.getElementById('cal-grid');
+    grid.innerHTML = '';
+
+    // Leading blanks
+    for (let i = 0; i < startDow; i++) {
+      const el = document.createElement('div'); el.className = 'mini-cal-day other-month';
+      const prevDay = new Date(calYear, calMonth, -startDow + i + 1);
+      el.textContent = prevDay.getDate(); grid.appendChild(el);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const el = document.createElement('div');
+      el.textContent = d;
+      let cls = 'mini-cal-day';
+      if (dateStr === todayStr) cls += ' today';
+      if (blockedDates.has(dateStr)) cls += ' blocked-day';
+      else if (confirmedDates.has(dateStr)) cls += ' confirmed-day';
+      else if (pendingDates.has(dateStr)) cls += ' booking-day';
+      el.className = cls;
+      el.title = dateStr;
+      // Click to pre-fill form
+      el.addEventListener('click', () => {
+        if (!document.getElementById('b-start').value) { document.getElementById('b-start').value = dateStr; }
+        else if (!document.getElementById('b-end').value && dateStr >= document.getElementById('b-start').value) { document.getElementById('b-end').value = dateStr; }
+        else { document.getElementById('b-start').value = dateStr; document.getElementById('b-end').value = ''; }
+      });
+      grid.appendChild(el);
+    }
+
+    // Trailing blanks
+    const total = startDow + daysInMonth;
+    const remaining = total % 7 === 0 ? 0 : 7 - (total % 7);
+    for (let i = 1; i <= remaining; i++) {
+      const el = document.createElement('div'); el.className = 'mini-cal-day other-month'; el.textContent = i; grid.appendChild(el);
+    }
+  }
+
+  function eachDate(start, end, cb) {
+    if (!start || !end) return;
+    let cur = new Date(start + 'T00:00:00');
+    const endD = new Date(end + 'T00:00:00');
+    while (cur <= endD) {
+      cb(cur.toLocaleDateString('en-CA'));
+      cur.setDate(cur.getDate() + 1);
+    }
+  }
+
+  function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function showToast(msg, type='info') {
+    const tc = document.getElementById('toast-container');
+    const t = document.createElement('div'); t.className = `toast ${type}`;
+    const icons = { success:'fa-circle-check', error:'fa-circle-exclamation', info:'fa-circle-info' };
+    t.innerHTML = `<i class="fa-solid ${icons[type]}"></i> ${esc(msg)}`;
+    tc.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); }, 4000);
+  }
+
+  renderCalendar();
+</script>
+</body>
+</html>
+

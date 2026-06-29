@@ -1,0 +1,306 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="./admin-styles.css">
+</head>
+<body>
+
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name" id="sidebar-brand">Booking Admin</div>
+      <div class="sidebar-brand-tag">Management Panel</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="./dashboard.html" class="active"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a href="./bookings.html"><i class="fa-solid fa-calendar-check"></i> Bookings</a>
+      <a href="./calendar.html"><i class="fa-solid fa-calendar-days"></i> Calendar</a>
+      <a href="./blocking.html"><i class="fa-solid fa-ban"></i> Date Blocking</a>
+      <a href="./units.html"><i class="fa-solid fa-building"></i> Units</a>
+      <a href="./addons.html"><i class="fa-solid fa-circle-plus"></i> Add-ons</a>
+      <a href="./amenities.html"><i class="fa-solid fa-star"></i> Amenities</a>
+      <a href="./holiday-rates.html"><i class="fa-solid fa-tag"></i> Holiday Rates</a>
+      <a href="./expenses.html"><i class="fa-solid fa-receipt"></i> Expenses</a>
+      <a href="./design.html"><i class="fa-solid fa-palette"></i> Design</a>
+      <a href="./settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-email" id="admin-email">—</div>
+      <button class="btn-signout" id="signout-btn">
+        <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-header-left">
+        <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Dashboard</span>
+      </div>
+      <span style="font-size:12px;color:var(--muted);" id="today-label">—</span>
+    </header>
+
+    <div class="page-body">
+
+      <!-- METRIC CARDS -->
+      <div class="metrics-grid" id="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon amber"><i class="fa-solid fa-clock"></i></div>
+          <div class="metric-value" id="m-pending">—</div>
+          <div class="metric-label">Pending Review</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon green"><i class="fa-solid fa-circle-check"></i></div>
+          <div class="metric-value" id="m-confirmed">—</div>
+          <div class="metric-label">Confirmed</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon blue"><i class="fa-solid fa-arrow-right-to-bracket"></i></div>
+          <div class="metric-value" id="m-checkins">—</div>
+          <div class="metric-label">Today's Check-ins</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon purple"><i class="fa-solid fa-arrow-right-from-bracket"></i></div>
+          <div class="metric-value" id="m-checkouts">—</div>
+          <div class="metric-label">Today's Check-outs</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon orange"><i class="fa-solid fa-peso-sign"></i></div>
+          <div class="metric-value" id="m-revenue">—</div>
+          <div class="metric-label">Revenue This Month</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon" style="background:#fee2e2;"><i class="fa-solid fa-receipt" style="color:#dc2626;"></i></div>
+          <div class="metric-value" id="m-costs">—</div>
+          <div class="metric-label">Costs This Month</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon" style="background:#d1fae5;"><i class="fa-solid fa-chart-line" style="color:#059669;"></i></div>
+          <div class="metric-value" id="m-net">—</div>
+          <div class="metric-label">Net This Month</div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+
+        <!-- PENDING ATTENTION -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i> Needs Attention</span>
+            <a href="./bookings.html?filter=pending" class="btn btn-sm btn-ghost">View All</a>
+          </div>
+          <div id="pending-list">
+            <div class="loading-state"><span class="spinner"></span></div>
+          </div>
+        </div>
+
+        <!-- RECENT BOOKINGS -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Recent Bookings</span>
+            <a href="./bookings.html" class="btn btn-sm btn-ghost">View All</a>
+          </div>
+          <div id="recent-list">
+            <div class="loading-state"><span class="spinner"></span></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script type="module">
+  import { requireAuth, adminSignOut, getAdminFirebase } from './admin-auth.js';
+  import {
+    getFirestore, collection, query, orderBy, limit, onSnapshot, where, doc, getDoc,
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  let costsThisMonth = 0;
+
+  // Mobile sidebar toggle
+  document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('open');
+  });
+  document.getElementById('sidebar-overlay').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  });
+
+  // --- Auth guard
+  const { user, clientId } = await requireAuth();
+
+  document.getElementById('admin-email').textContent = user.email;
+  document.getElementById('signout-btn').addEventListener('click', adminSignOut);
+
+  // Load brand name from settings/public
+  const { db } = getAdminFirebase();
+  try {
+    const pub = await getDoc(doc(db, 'clients', clientId, 'settings', 'public'));
+    if (pub.exists() && pub.data().companyName) {
+      const name = pub.data().companyName;
+      document.getElementById('sidebar-brand').textContent = name;
+      document.title = `Dashboard — ${name}`;
+    }
+  } catch (_) {}
+
+  // Set today label (Philippine time)
+  const todayPH = new Date().toLocaleDateString('en-PH', {
+    timeZone: 'Asia/Manila', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  });
+  document.getElementById('today-label').textContent = todayPH;
+
+  // Today's date string in PH time (YYYY-MM-DD)
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+
+  // Revenue: start of current month in PH time
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  // --- Load bookings (last 200 for metrics)
+  const bookingsRef = collection(db, 'clients', clientId, 'bookings');
+  const q = query(bookingsRef, orderBy('createdAt', 'desc'), limit(200));
+
+  onSnapshot(q, (snap) => {
+    const bookings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    updateMetrics(bookings);
+    renderPendingList(bookings);
+    renderRecentList(bookings);
+  }, (err) => {
+    console.error('Dashboard snapshot error:', err);
+  });
+
+  // Expenses listener for cost metrics
+  const monthStartStr = new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA');
+  onSnapshot(collection(db, 'clients', clientId, 'expenses'), (snap) => {
+    costsThisMonth = snap.docs
+      .map(d => d.data())
+      .filter(e => e.date >= monthStartStr)
+      .reduce((s, e) => s + (Number(e.amount) || 0), 0);
+    document.getElementById('m-costs').textContent = formatCurrency(costsThisMonth);
+    // Recalculate net from current revenue display
+    const revText = document.getElementById('m-revenue').textContent;
+    const rev = revText === '—' ? 0 : Number(revText.replace(/[₱,]/g, '')) || 0;
+    const net = rev - costsThisMonth;
+    document.getElementById('m-net').textContent = formatCurrency(net);
+  });
+
+  function updateMetrics(bookings) {
+    const pending   = bookings.filter(b => b.status === 'pending_review').length;
+    const confirmed = bookings.filter(b => b.status === 'confirmed').length;
+    const checkins  = bookings.filter(b => b.checkIn  === todayStr && b.status === 'confirmed').length;
+    const checkouts = bookings.filter(b => b.checkOut === todayStr && b.status === 'confirmed').length;
+
+    // Revenue: sum grandTotal for confirmed bookings confirmed this month
+    const revenue = bookings
+      .filter(b => b.status === 'confirmed' && b.confirmedAt)
+      .filter(b => {
+        try {
+          const d = b.confirmedAt.toDate ? b.confirmedAt.toDate() : new Date(b.confirmedAt);
+          return d >= monthStart;
+        } catch { return false; }
+      })
+      .reduce((sum, b) => sum + (Number(b.grandTotal) || 0), 0);
+
+    document.getElementById('m-pending').textContent   = pending;
+    document.getElementById('m-confirmed').textContent = confirmed;
+    document.getElementById('m-checkins').textContent  = checkins;
+    document.getElementById('m-checkouts').textContent = checkouts;
+    document.getElementById('m-revenue').textContent   = formatCurrency(revenue);
+    document.getElementById('m-costs').textContent     = formatCurrency(costsThisMonth);
+    document.getElementById('m-net').textContent       = formatCurrency(revenue - costsThisMonth);
+  }
+
+  function renderPendingList(bookings) {
+    const pending = bookings.filter(b => b.status === 'pending_review').slice(0, 6);
+    const el = document.getElementById('pending-list');
+    if (pending.length === 0) {
+      el.innerHTML = `<div class="empty-state" style="padding:30px 20px;">
+        <i class="fa-solid fa-check-circle" style="color:var(--success);"></i>
+        <p>No pending bookings</p>
+      </div>`;
+      return;
+    }
+    el.innerHTML = pending.map(b => `
+      <a href="./bookings.html?id=${b.id}" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit;transition:background .1s;" class="booking-row-link">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:var(--text);">${esc(b.guestName || '—')}</div>
+          <div style="font-size:12px;color:var(--muted);">${esc(b.referenceNo || b.id)} · ${esc(b.unitName || '—')}</div>
+          <div style="font-size:11.5px;color:var(--muted);">${esc(b.checkIn)} → ${esc(b.checkOut)}</div>
+        </div>
+        <span class="badge badge-pending">Pending</span>
+      </a>
+    `).join('');
+    // Add hover effect
+    el.querySelectorAll('.booking-row-link').forEach(a => {
+      a.addEventListener('mouseover', () => a.style.background = '#f8fafc');
+      a.addEventListener('mouseout',  () => a.style.background = '');
+    });
+  }
+
+  function renderRecentList(bookings) {
+    const recent = bookings.slice(0, 6);
+    const el = document.getElementById('recent-list');
+    if (recent.length === 0) {
+      el.innerHTML = `<div class="empty-state" style="padding:30px 20px;"><i class="fa-solid fa-inbox"></i><p>No bookings yet</p></div>`;
+      return;
+    }
+    el.innerHTML = recent.map(b => `
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;">${esc(b.guestName || '—')}</div>
+          <div style="font-size:12px;color:var(--muted);">${esc(b.referenceNo || b.id)} · ${esc(b.unitName || '—')}</div>
+          <div style="font-size:11.5px;color:var(--muted);">${formatDate(b.createdAt)}</div>
+        </div>
+        ${statusBadge(b.status)}
+      </div>
+    `).join('');
+  }
+
+  function formatCurrency(n) {
+    return '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  function formatDate(ts) {
+    if (!ts) return '—';
+    try {
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch { return '—'; }
+  }
+
+  function statusBadge(status) {
+    const map = {
+      pending_review: ['badge-pending',   'Pending'],
+      confirmed:      ['badge-confirmed', 'Confirmed'],
+      rejected:       ['badge-rejected',  'Rejected'],
+      cancelled:      ['badge-cancelled', 'Cancelled'],
+      expired:        ['badge-expired',   'Expired'],
+    };
+    const [cls, label] = map[status] || ['badge-cancelled', status];
+    return `<span class="badge ${cls}">${label}</span>`;
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
+

@@ -1,0 +1,404 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Units — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="./admin-styles.css">
+</head>
+<body>
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name" id="sidebar-brand">Booking Admin</div>
+      <div class="sidebar-brand-tag">Management Panel</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="./dashboard.html"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a href="./bookings.html"><i class="fa-solid fa-calendar-check"></i> Bookings</a>
+      <a href="./calendar.html"><i class="fa-solid fa-calendar-days"></i> Calendar</a>
+      <a href="./blocking.html"><i class="fa-solid fa-ban"></i> Date Blocking</a>
+      <a href="./units.html" class="active"><i class="fa-solid fa-building"></i> Units</a>
+      <a href="./addons.html"><i class="fa-solid fa-circle-plus"></i> Add-ons</a>
+      <a href="./amenities.html"><i class="fa-solid fa-star"></i> Amenities</a>
+      <a href="./holiday-rates.html"><i class="fa-solid fa-tag"></i> Holiday Rates</a>
+      <a href="./expenses.html"><i class="fa-solid fa-receipt"></i> Expenses</a>
+      <a href="./design.html"><i class="fa-solid fa-palette"></i> Design</a>
+      <a href="./settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-email" id="admin-email">—</div>
+      <button class="btn-signout" id="signout-btn"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-header-left">
+        <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Unit Portfolio</span>
+      </div>
+      <button class="btn btn-primary" id="add-btn"><i class="fa-solid fa-plus"></i> Register Unit</button>
+    </header>
+    <div class="page-body">
+      <div id="units-container"><div class="loading-state"><span class="spinner"></span></div></div>
+    </div>
+  </main>
+</div>
+
+<!-- Unit Modal -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Register New Unit</div>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;">
+        <div class="form-group full" style="grid-column:1/-1">
+          <label class="form-label">Unit Name <span class="required">*</span></label>
+          <input type="text" class="form-control" id="u-name" placeholder="e.g. Villa Santorini Sunset">
+        </div>
+        <div class="form-group full" style="grid-column:1/-1">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" id="u-desc" rows="3" placeholder="Luxury descriptions, features…"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Weekday Rate (₱) <span class="required">*</span></label>
+          <input type="number" class="form-control" id="u-weekday" placeholder="2500" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Weekend Rate (₱)</label>
+          <input type="number" class="form-control" id="u-weekend" placeholder="3000" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Check-In Time</label>
+          <input type="text" class="form-control" id="u-checkin" placeholder="2:00 PM">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Check-Out Time</label>
+          <input type="text" class="form-control" id="u-checkout" placeholder="12:00 PM">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Guests <span class="required">*</span></label>
+          <input type="number" class="form-control" id="u-maxguests" placeholder="4" min="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Extra Guests</label>
+          <input type="number" class="form-control" id="u-extraguests" placeholder="2" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Extra Guest Fee (₱/night)</label>
+          <input type="number" class="form-control" id="u-extrafee" placeholder="500" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rating (1–5)</label>
+          <input type="number" class="form-control" id="u-rating" placeholder="4.5" min="1" max="5" step="0.1">
+        </div>
+        <div class="form-group full" style="grid-column:1/-1">
+          <label class="form-label">Location</label>
+          <input type="text" class="form-control" id="u-location" placeholder="e.g. Puerto Galera, Oriental Mindoro">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pets Allowed</label>
+          <select class="form-control" id="u-pets">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pets Fee (₱/night)</label>
+          <input type="number" class="form-control" id="u-petsfee" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Beds</label>
+          <input type="number" class="form-control" id="u-beds" placeholder="1" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rooms</label>
+          <input type="number" class="form-control" id="u-rooms" placeholder="1" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bathrooms</label>
+          <input type="number" class="form-control" id="u-baths" placeholder="1" min="0">
+        </div>
+        <div class="form-group full" style="grid-column:1/-1">
+          <label class="form-label">Unit Photos</label>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <label class="btn btn-ghost" style="cursor:pointer;">
+              <i class="fa-solid fa-images"></i> Select Images
+              <input type="file" id="u-photos" accept="image/*" multiple style="display:none;">
+            </label>
+            <span id="upload-status" style="font-size:12px;color:var(--muted);"></span>
+          </div>
+          <div class="hero-images-strip" id="photos-preview" style="margin-top:10px;"></div>
+          <input type="hidden" id="u-photo-urls" value="[]">
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="save-btn"><i class="fa-solid fa-floppy-disk"></i> Save Unit</button>
+      <button class="btn btn-ghost" id="cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script type="module">
+  import { requireAuth, adminSignOut, getAdminFirebase } from './admin-auth.js';
+  import {
+    collection, onSnapshot, addDoc, deleteDoc, updateDoc, doc, serverTimestamp, getDoc,
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('open');
+  });
+  document.getElementById('sidebar-overlay').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  });
+
+  const { user, clientId } = await requireAuth();
+  document.getElementById('admin-email').textContent = user.email;
+  document.getElementById('signout-btn').addEventListener('click', adminSignOut);
+  const { db } = getAdminFirebase();
+
+  try {
+    const pub = await getDoc(doc(db, 'clients', clientId, 'settings', 'public'));
+    if (pub.exists() && pub.data().companyName) document.getElementById('sidebar-brand').textContent = pub.data().companyName;
+  } catch (_) {}
+
+  let editingId = null;
+  let photoUrls = [];
+
+  // Photo upload via signed Cloudinary
+  document.getElementById('u-photos').addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    const statusEl = document.getElementById('upload-status');
+    statusEl.textContent = `Uploading ${files.length} image(s)…`;
+    try {
+      const token = await user.getIdToken();
+      const sigRes = await fetch('/.netlify/functions/get-upload-signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ clientId, type: 'public' }),
+      });
+      if (!sigRes.ok) throw new Error('Could not get upload signature');
+      const sig = await sigRes.json();
+
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('api_key', sig.apiKey);
+        fd.append('timestamp', sig.timestamp);
+        fd.append('signature', sig.signature);
+        fd.append('folder', sig.folder);
+        fd.append('allowed_formats', sig.allowedFormats);
+        fd.append('unique_filename', 'true');
+        fd.append('overwrite', 'false');
+        const up = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, { method: 'POST', body: fd });
+        if (!up.ok) throw new Error('Upload failed for ' + file.name);
+        const data = await up.json();
+        photoUrls.push(data.secure_url);
+      }
+      document.getElementById('u-photo-urls').value = JSON.stringify(photoUrls);
+      renderPhotoPreviews();
+      statusEl.textContent = `${photoUrls.length} photo(s) ready.`;
+    } catch (err) {
+      showToast('Upload failed: ' + err.message, 'error');
+      statusEl.textContent = '';
+    }
+    e.target.value = '';
+  });
+
+  function renderPhotoPreviews() {
+    const strip = document.getElementById('photos-preview');
+    strip.innerHTML = photoUrls.map((url, i) => `
+      <div class="hero-img-thumb">
+        <img src="${esc(url)}" alt="">
+        <button class="hero-img-remove" data-i="${i}" type="button">&times;</button>
+      </div>
+    `).join('');
+    strip.querySelectorAll('.hero-img-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        photoUrls.splice(Number(btn.dataset.i), 1);
+        document.getElementById('u-photo-urls').value = JSON.stringify(photoUrls);
+        renderPhotoPreviews();
+      });
+    });
+  }
+
+  function resetForm() {
+    ['u-name','u-desc','u-weekday','u-weekend','u-checkin','u-checkout','u-maxguests',
+     'u-extraguests','u-extrafee','u-rating','u-location','u-petsfee','u-beds','u-rooms','u-baths']
+      .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    document.getElementById('u-pets').value = 'false';
+    document.getElementById('u-checkin').value = '2:00 PM';
+    document.getElementById('u-checkout').value = '12:00 PM';
+    document.getElementById('u-rating').value = '5';
+    photoUrls = [];
+    document.getElementById('u-photo-urls').value = '[]';
+    document.getElementById('photos-preview').innerHTML = '';
+    document.getElementById('upload-status').textContent = '';
+  }
+
+  function openModal(unit = null) {
+    editingId = unit ? unit.id : null;
+    document.getElementById('modal-title').textContent = unit ? 'Modify Unit' : 'Register New Unit';
+    resetForm();
+    if (unit) {
+      setVal('u-name', unit.name);
+      setVal('u-desc', unit.description);
+      setVal('u-weekday', unit.weekdayRate);
+      setVal('u-weekend', unit.weekendRate);
+      setVal('u-checkin', unit.checkIn || '2:00 PM');
+      setVal('u-checkout', unit.checkOut || '12:00 PM');
+      setVal('u-maxguests', unit.maxGuests);
+      setVal('u-extraguests', unit.maxExtraGuests);
+      setVal('u-extrafee', unit.extraGuestFee);
+      setVal('u-rating', unit.rating);
+      setVal('u-location', unit.location);
+      document.getElementById('u-pets').value = unit.petsAllowed ? 'true' : 'false';
+      setVal('u-petsfee', unit.petsFee);
+      setVal('u-beds', unit.beds);
+      setVal('u-rooms', unit.rooms);
+      setVal('u-baths', unit.bathrooms);
+      photoUrls = Array.isArray(unit.photoURLs) ? [...unit.photoURLs] : [];
+      document.getElementById('u-photo-urls').value = JSON.stringify(photoUrls);
+      renderPhotoPreviews();
+    }
+    document.getElementById('modal-backdrop').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('u-name').focus();
+  }
+
+  function closeModal() {
+    document.getElementById('modal-backdrop').classList.remove('open');
+    document.body.style.overflow = '';
+    editingId = null;
+  }
+
+  document.getElementById('add-btn').addEventListener('click', () => openModal());
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('modal-backdrop').addEventListener('click', e => { if (e.target === document.getElementById('modal-backdrop')) closeModal(); });
+
+  document.getElementById('save-btn').addEventListener('click', async () => {
+    const name = getVal('u-name');
+    const weekdayRate = Number(getVal('u-weekday'));
+    const maxGuests = Number(getVal('u-maxguests'));
+    if (!name) { showToast('Unit name is required.', 'error'); return; }
+    if (!weekdayRate) { showToast('Weekday rate is required.', 'error'); return; }
+    if (!maxGuests) { showToast('Max guests is required.', 'error'); return; }
+
+    const data = {
+      name,
+      description:    getVal('u-desc'),
+      weekdayRate,
+      weekendRate:    Number(getVal('u-weekend')) || weekdayRate,
+      checkIn:        getVal('u-checkin') || '2:00 PM',
+      checkOut:       getVal('u-checkout') || '12:00 PM',
+      maxGuests,
+      maxExtraGuests: Number(getVal('u-extraguests')) || 0,
+      extraGuestFee:  Number(getVal('u-extrafee')) || 0,
+      rating:         Number(getVal('u-rating')) || 5,
+      location:       getVal('u-location'),
+      petsAllowed:    document.getElementById('u-pets').value === 'true',
+      petsFee:        Number(getVal('u-petsfee')) || 0,
+      beds:           Number(getVal('u-beds')) || 0,
+      rooms:          Number(getVal('u-rooms')) || 0,
+      bathrooms:      Number(getVal('u-baths')) || 0,
+      photoURLs:      JSON.parse(document.getElementById('u-photo-urls').value || '[]'),
+      status: 'active',
+    };
+
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Saving…';
+    try {
+      if (editingId) {
+        await updateDoc(doc(db, 'clients', clientId, 'units', editingId), { ...data, updatedAt: serverTimestamp() });
+        showToast('Unit updated!', 'success');
+      } else {
+        await addDoc(collection(db, 'clients', clientId, 'units'), { ...data, createdAt: serverTimestamp() });
+        showToast('Unit registered!', 'success');
+      }
+      closeModal();
+    } catch (err) { showToast('Save failed: ' + err.message, 'error'); }
+    finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Unit'; }
+  });
+
+  // Real-time list
+  let allUnits = [];
+  onSnapshot(collection(db, 'clients', clientId, 'units'), (snap) => {
+    allUnits = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderUnits();
+  });
+
+  function renderUnits() {
+    const container = document.getElementById('units-container');
+    if (allUnits.length === 0) {
+      container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-building"></i><p>No units yet. Click "Register Unit" to add your first room.</p></div>`;
+      return;
+    }
+    container.innerHTML = `<div class="units-grid">${allUnits.map(u => `
+      <div class="unit-card">
+        <div class="unit-card-photo">
+          ${u.photoURLs && u.photoURLs.length
+            ? `<img src="${esc(u.photoURLs[0])}" alt="${esc(u.name)}" loading="lazy">`
+            : `<div class="unit-card-photo-placeholder"><i class="fa-solid fa-image"></i></div>`}
+          <span class="unit-card-id">${esc(u.customId || u.id.slice(0,8).toUpperCase())}</span>
+        </div>
+        <div class="unit-card-body">
+          <div class="unit-card-name">${esc(u.name)}</div>
+          ${u.location ? `<div class="unit-card-location"><i class="fa-solid fa-location-dot"></i> ${esc(u.location)}</div>` : ''}
+          <div class="unit-card-rates">
+            <div class="unit-card-rate-item"><span class="label">Weekday</span><span class="value">₱${Number(u.weekdayRate||0).toLocaleString()}</span></div>
+            <div class="unit-card-rate-item"><span class="label">Weekend</span><span class="value">₱${Number(u.weekendRate||0).toLocaleString()}</span></div>
+            <div class="unit-card-rate-item"><span class="label">Capacity</span><span class="value">${u.maxGuests} guests</span></div>
+            <div class="unit-card-rate-item"><span class="label">Extra Fee</span><span class="value">₱${Number(u.extraGuestFee||0).toLocaleString()}/night</span></div>
+          </div>
+          ${u.petsAllowed ? `<div style="font-size:12px;color:var(--success);"><i class="fa-solid fa-dog"></i> Pet Friendly${u.petsFee ? ` (₱${Number(u.petsFee).toLocaleString()}/night)` : ''}</div>` : ''}
+        </div>
+        <div class="unit-card-actions">
+          <button class="btn btn-ghost btn-sm" style="flex:1;" data-modify="${esc(u.id)}"><i class="fa-solid fa-pen"></i> Modify</button>
+          <button class="btn btn-danger btn-sm" data-delete="${esc(u.id)}"><i class="fa-solid fa-trash"></i> Delete</button>
+        </div>
+      </div>
+    `).join('')}</div>`;
+
+    container.querySelectorAll('[data-modify]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const unit = allUnits.find(u => u.id === btn.dataset.modify);
+        if (unit) openModal(unit);
+      });
+    });
+    container.querySelectorAll('[data-delete]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this unit? This cannot be undone.')) return;
+        try { await deleteDoc(doc(db, 'clients', clientId, 'units', btn.dataset.delete)); showToast('Unit deleted.', 'success'); }
+        catch (err) { showToast('Delete failed: ' + err.message, 'error'); }
+      });
+    });
+  }
+
+  function setVal(id, val) { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; }
+  function getVal(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+  function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function showToast(msg, type='info') {
+    const tc = document.getElementById('toast-container');
+    const t = document.createElement('div'); t.className = `toast ${type}`;
+    const icons = { success:'fa-circle-check', error:'fa-circle-exclamation', info:'fa-circle-info' };
+    t.innerHTML = `<i class="fa-solid ${icons[type]}"></i> ${esc(msg)}`;
+    tc.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); }, 4000);
+  }
+</script>
+</body>
+</html>
+

@@ -1,0 +1,501 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expenses — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="./admin-styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+</head>
+<body>
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name" id="sidebar-brand">Booking Admin</div>
+      <div class="sidebar-brand-tag">Management Panel</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="./dashboard.html"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a href="./bookings.html"><i class="fa-solid fa-calendar-check"></i> Bookings</a>
+      <a href="./calendar.html"><i class="fa-solid fa-calendar-days"></i> Calendar</a>
+      <a href="./blocking.html"><i class="fa-solid fa-ban"></i> Date Blocking</a>
+      <a href="./units.html"><i class="fa-solid fa-building"></i> Units</a>
+      <a href="./addons.html"><i class="fa-solid fa-circle-plus"></i> Add-ons</a>
+      <a href="./amenities.html"><i class="fa-solid fa-star"></i> Amenities</a>
+      <a href="./holiday-rates.html"><i class="fa-solid fa-tag"></i> Holiday Rates</a>
+      <a href="./expenses.html" class="active"><i class="fa-solid fa-receipt"></i> Expenses</a>
+      <a href="./design.html"><i class="fa-solid fa-palette"></i> Design</a>
+      <a href="./settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-email" id="admin-email">—</div>
+      <button class="btn-signout" id="signout-btn"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-header-left">
+        <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Operational Expenses</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost" id="report-btn"><i class="fa-solid fa-file-arrow-down"></i> Download Report</button>
+        <button class="btn btn-primary" id="add-btn"><i class="fa-solid fa-plus"></i> Add Expense</button>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <!-- Metrics -->
+      <div class="metrics-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:20px;">
+        <div class="metric-card">
+          <div class="metric-icon orange"><i class="fa-solid fa-coins"></i></div>
+          <div class="metric-value" id="m-total">—</div>
+          <div class="metric-label">Total Expenses</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon blue"><i class="fa-solid fa-calendar"></i></div>
+          <div class="metric-value" id="m-month">—</div>
+          <div class="metric-label">This Month</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon green"><i class="fa-solid fa-list"></i></div>
+          <div class="metric-value" id="m-count">—</div>
+          <div class="metric-label">Total Entries</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon purple"><i class="fa-solid fa-tag"></i></div>
+          <div class="metric-value" id="m-topcat" style="font-size:16px;">—</div>
+          <div class="metric-label">Top Category</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-body" style="padding:12px 20px;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <select class="form-control" id="filter-cat" style="width:auto;min-width:150px;">
+              <option value="">All Categories</option>
+              <option value="utilities">Utilities</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="supplies">Supplies</option>
+              <option value="salaries">Salaries</option>
+              <option value="marketing">Marketing</option>
+              <option value="other">Other</option>
+            </select>
+            <input type="date" class="form-control" id="filter-start" style="width:auto;">
+            <input type="date" class="form-control" id="filter-end" style="width:auto;">
+            <button class="btn btn-ghost" id="clear-filter-btn">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="card">
+        <div id="expenses-container">
+          <div class="loading-state"><span class="spinner"></span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Add Expense Modal -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add New Expense</div>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Date <span class="required">*</span></label>
+        <input type="date" class="form-control" id="exp-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category <span class="required">*</span></label>
+        <select class="form-control" id="exp-cat">
+          <option value="utilities">Utilities</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="supplies">Supplies</option>
+          <option value="salaries">Salaries</option>
+          <option value="marketing">Marketing</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description <span class="required">*</span></label>
+        <input type="text" class="form-control" id="exp-desc" placeholder="e.g. water bill">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Amount (₱) <span class="required">*</span></label>
+        <input type="number" class="form-control" id="exp-amount" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Associated Unit (optional)</label>
+        <select class="form-control" id="exp-unit">
+          <option value="all">All Units</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="save-btn"><i class="fa-solid fa-floppy-disk"></i> Save Expense</button>
+      <button class="btn btn-ghost" id="cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script type="module">
+  import { requireAuth, adminSignOut, getAdminFirebase } from './admin-auth.js';
+  import {
+    collection, onSnapshot, addDoc, deleteDoc, getDocs, doc, serverTimestamp,
+    orderBy, query, where, getDoc,
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('open');
+  });
+  document.getElementById('sidebar-overlay').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  });
+
+  const { user, clientId } = await requireAuth();
+  document.getElementById('admin-email').textContent = user.email;
+  document.getElementById('signout-btn').addEventListener('click', adminSignOut);
+  const { db } = getAdminFirebase();
+
+  try {
+    const pub = await getDoc(doc(db, 'clients', clientId, 'settings', 'public'));
+    if (pub.exists() && pub.data().companyName) document.getElementById('sidebar-brand').textContent = pub.data().companyName;
+  } catch (_) {}
+
+  // Set default date to today
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  document.getElementById('exp-date').value = todayStr;
+
+  // Load units for dropdown
+  let units = [];
+  try {
+    const snap = await getDocs(collection(db, 'clients', clientId, 'units'));
+    units = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const sel = document.getElementById('exp-unit');
+    units.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.id; opt.textContent = u.name; sel.appendChild(opt);
+    });
+  } catch (_) {}
+
+  // Philippines month start
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA');
+
+  let allExpenses = [];
+
+  // Filters
+  let filterCat = '', filterStart = '', filterEnd = '';
+  document.getElementById('filter-cat').addEventListener('change', e => { filterCat = e.target.value; renderExpenses(); });
+  document.getElementById('filter-start').addEventListener('change', e => { filterStart = e.target.value; renderExpenses(); });
+  document.getElementById('filter-end').addEventListener('change', e => { filterEnd = e.target.value; renderExpenses(); });
+  document.getElementById('clear-filter-btn').addEventListener('click', () => {
+    filterCat = ''; filterStart = ''; filterEnd = '';
+    document.getElementById('filter-cat').value = '';
+    document.getElementById('filter-start').value = '';
+    document.getElementById('filter-end').value = '';
+    renderExpenses();
+  });
+
+  // Real-time
+  onSnapshot(query(collection(db, 'clients', clientId, 'expenses'), orderBy('date', 'desc')), (snap) => {
+    allExpenses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    updateMetrics();
+    renderExpenses();
+  });
+
+  function updateMetrics() {
+    const total = allExpenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+    const month = allExpenses.filter(e => e.date >= monthStart).reduce((s, e) => s + (Number(e.amount) || 0), 0);
+    // Top category
+    const catTotals = {};
+    allExpenses.forEach(e => { catTotals[e.category] = (catTotals[e.category] || 0) + (Number(e.amount) || 0); });
+    const topCat = Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0];
+
+    document.getElementById('m-total').textContent = php(total);
+    document.getElementById('m-month').textContent = php(month);
+    document.getElementById('m-count').textContent = allExpenses.length;
+    document.getElementById('m-topcat').textContent = topCat ? capitalize(topCat[0]) : '—';
+  }
+
+  function renderExpenses() {
+    let list = allExpenses;
+    if (filterCat) list = list.filter(e => e.category === filterCat);
+    if (filterStart) list = list.filter(e => e.date >= filterStart);
+    if (filterEnd)   list = list.filter(e => e.date <= filterEnd);
+
+    const container = document.getElementById('expenses-container');
+    if (list.length === 0) {
+      container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-receipt"></i><p>No expenses found.</p></div>`;
+      return;
+    }
+    container.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Unit</th><th></th></tr></thead>
+      <tbody>${list.map(e => `
+        <tr>
+          <td>${esc(e.date)}</td>
+          <td><span class="cat-tag cat-${esc(e.category)}">${esc(e.category)}</span></td>
+          <td>${esc(e.description)}</td>
+          <td style="font-weight:700;color:var(--danger);">${php(e.amount)}</td>
+          <td style="color:var(--muted);font-size:12px;">${esc(e.unitName || e.unitId || 'All Units')}</td>
+          <td><button class="btn btn-sm btn-ghost" style="color:var(--danger);" data-id="${esc(e.id)}"><i class="fa-solid fa-trash"></i></button></td>
+        </tr>
+      `).join('')}</tbody>
+    </table></div>`;
+
+    container.querySelectorAll('[data-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this expense?')) return;
+        try { await deleteDoc(doc(db, 'clients', clientId, 'expenses', btn.dataset.id)); showToast('Deleted.', 'success'); }
+        catch (err) { showToast('Delete failed: ' + err.message, 'error'); }
+      });
+    });
+  }
+
+  // Modal
+  function openModal() {
+    document.getElementById('exp-date').value = todayStr;
+    document.getElementById('exp-desc').value = '';
+    document.getElementById('exp-amount').value = '';
+    document.getElementById('exp-cat').value = 'utilities';
+    document.getElementById('exp-unit').value = 'all';
+    document.getElementById('modal-backdrop').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('exp-desc').focus();
+  }
+  function closeModal() { document.getElementById('modal-backdrop').classList.remove('open'); document.body.style.overflow = ''; }
+  document.getElementById('add-btn').addEventListener('click', openModal);
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('modal-backdrop').addEventListener('click', e => { if (e.target === document.getElementById('modal-backdrop')) closeModal(); });
+
+  document.getElementById('save-btn').addEventListener('click', async () => {
+    const date   = document.getElementById('exp-date').value;
+    const cat    = document.getElementById('exp-cat').value;
+    const desc   = document.getElementById('exp-desc').value.trim();
+    const amount = Number(document.getElementById('exp-amount').value);
+    const unitId = document.getElementById('exp-unit').value;
+    if (!date || !desc || !amount || amount <= 0) { showToast('Fill in all required fields.', 'error'); return; }
+    const unitName = unitId === 'all' ? 'All Units' : (units.find(u => u.id === unitId)?.name || unitId);
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true;
+    try {
+      await addDoc(collection(db, 'clients', clientId, 'expenses'), {
+        date, category: cat, description: desc, amount, unitId, unitName,
+        createdAt: serverTimestamp(),
+      });
+      showToast('Expense saved!', 'success');
+      closeModal();
+    } catch (err) { showToast('Save failed: ' + err.message, 'error'); }
+    finally { btn.disabled = false; }
+  });
+
+  // ── DOWNLOAD REPORT ──────────────────────────────────
+  document.getElementById('report-btn').addEventListener('click', async () => {
+    const start = document.getElementById('filter-start').value;
+    const end   = document.getElementById('filter-end').value;
+
+    const btn = document.getElementById('report-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating…';
+
+    try {
+      // Fetch confirmed bookings (no orderBy to avoid composite index requirement)
+      const bSnap = await getDocs(query(
+        collection(db, 'clients', clientId, 'bookings'),
+        where('status', '==', 'confirmed')
+      ));
+      let bookings = bSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      bookings.sort((a, b) => (a.checkIn > b.checkIn ? 1 : -1));
+
+      // Filter bookings by check-in date range
+      if (start) bookings = bookings.filter(b => b.checkIn >= start);
+      if (end)   bookings = bookings.filter(b => b.checkIn <= end);
+
+      // Filter expenses
+      let expenses = allExpenses;
+      if (start) expenses = expenses.filter(e => e.date >= start);
+      if (end)   expenses = expenses.filter(e => e.date <= end);
+
+      const totalRevenue  = bookings.reduce((s, b) => s + (Number(b.grandTotal) || 0), 0);
+      const totalExpenses = expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+      const netProfit     = totalRevenue - totalExpenses;
+      const totalNights   = bookings.reduce((s, b) => s + (Number(b.nights) || 0), 0);
+
+      const periodLabel = start || end
+        ? `${start || 'start'} to ${end || 'present'}`
+        : 'All Time';
+
+      const now = new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' });
+
+      // Load company name for the report header
+      let companyName = 'Staycation';
+      try {
+        const pubSnap = await getDoc(doc(db, 'clients', clientId, 'settings', 'public'));
+        if (pubSnap.exists() && pubSnap.data().companyName) companyName = pubSnap.data().companyName;
+      } catch (_) {}
+
+      const pstr = n => '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 0 });
+      const pnum = n => Number(n || 0);
+
+      function brd(clr) {
+        clr = clr || '94A3B8';
+        const b = { style: 'thin', color: { rgb: clr } };
+        return { top: b, bottom: b, left: b, right: b };
+      }
+      function sc(v, s) { return { v, s, t: typeof v === 'number' ? 'n' : 's' }; }
+      function ec(s) { return { v: '', s: s || {}, t: 's' }; }
+
+      const NCOLS = 8;
+      const SY = {
+        title:   { font:{ bold:true, sz:14, color:{rgb:'FFFFFF'} }, fill:{fgColor:{rgb:'1E3A5F'}}, alignment:{horizontal:'left',vertical:'center'} },
+        meta:    { font:{ sz:10 }, fill:{fgColor:{rgb:'F0F4FA'}}, alignment:{horizontal:'left'} },
+        metaV:   { font:{ sz:10, bold:true }, fill:{fgColor:{rgb:'F0F4FA'}}, alignment:{horizontal:'left'} },
+        secHdr:  { font:{ bold:true, sz:11, color:{rgb:'FFFFFF'} }, fill:{fgColor:{rgb:'2563EB'}}, alignment:{horizontal:'left',vertical:'center'} },
+        colHdr:  { font:{ bold:true, sz:10 }, fill:{fgColor:{rgb:'DBEAFE'}}, border:brd(), alignment:{horizontal:'center',vertical:'center',wrapText:true} },
+        data:    { font:{ sz:10 }, fill:{fgColor:{rgb:'FFFFFF'}}, border:brd(), alignment:{horizontal:'left',vertical:'center'} },
+        dataA:   { font:{ sz:10 }, fill:{fgColor:{rgb:'F0F6FF'}}, border:brd(), alignment:{horizontal:'left',vertical:'center'} },
+        num:     { font:{ sz:10 }, fill:{fgColor:{rgb:'FFFFFF'}}, border:brd(), alignment:{horizontal:'right',vertical:'center'} },
+        numA:    { font:{ sz:10 }, fill:{fgColor:{rgb:'F0F6FF'}}, border:brd(), alignment:{horizontal:'right',vertical:'center'} },
+        totLbl:  { font:{ bold:true, sz:10 }, fill:{fgColor:{rgb:'FEF9C3'}}, border:brd(), alignment:{horizontal:'left'} },
+        totNum:  { font:{ bold:true, sz:10 }, fill:{fgColor:{rgb:'FEF9C3'}}, border:brd(), alignment:{horizontal:'right'} },
+        ovLbl:   { font:{ bold:true, sz:10 }, fill:{fgColor:{rgb:'EFF6FF'}}, border:brd(), alignment:{horizontal:'left'} },
+        ovRev:   { font:{ bold:true, sz:11, color:{rgb:'166534'} }, fill:{fgColor:{rgb:'DCFCE7'}}, border:brd(), alignment:{horizontal:'right'} },
+        ovExp:   { font:{ bold:true, sz:11, color:{rgb:'991B1B'} }, fill:{fgColor:{rgb:'FEE2E2'}}, border:brd(), alignment:{horizontal:'right'} },
+        ovNet:   { font:{ bold:true, sz:12, color:{rgb:'1E3A5F'} }, fill:{fgColor:{rgb:'BFDBFE'}}, border:brd('2563EB'), alignment:{horizontal:'right'} },
+        ovNum:   { font:{ bold:true, sz:11 }, fill:{fgColor:{rgb:'EFF6FF'}}, border:brd(), alignment:{horizontal:'right'} },
+        blank:   {},
+      };
+
+      const rows = [];
+      const BLK = () => Array(NCOLS).fill(ec(SY.blank));
+
+      rows.push([sc('FINANCIAL REPORT', SY.title), ...Array(NCOLS-1).fill(ec(SY.title))]);
+      rows.push([sc('Property', SY.meta), sc(companyName, SY.metaV), ...Array(NCOLS-2).fill(ec(SY.meta))]);
+      rows.push([sc('Period', SY.meta), sc(periodLabel, SY.metaV), ...Array(NCOLS-2).fill(ec(SY.meta))]);
+      rows.push([sc('Generated', SY.meta), sc(now, SY.metaV), ...Array(NCOLS-2).fill(ec(SY.meta))]);
+      rows.push(BLK());
+
+      rows.push([sc('OVERVIEW', SY.secHdr), ...Array(NCOLS-1).fill(ec(SY.secHdr))]);
+      const ovRow = (lbl, val, vs) => [sc(lbl, SY.ovLbl), ec(SY.ovLbl), ec(SY.ovLbl), ec(SY.ovLbl), ec(SY.ovLbl), ec(SY.ovLbl), sc(val, vs), ec(SY.blank)];
+      rows.push(ovRow('Total Revenue',       pstr(totalRevenue),  SY.ovRev));
+      rows.push(ovRow('Total Expenses',      pstr(totalExpenses), SY.ovExp));
+      rows.push(ovRow('Net Profit / Loss',   pstr(netProfit),     SY.ovNet));
+      rows.push(ovRow('Confirmed Bookings',  bookings.length,     SY.ovNum));
+      rows.push(ovRow('Total Nights Sold',   totalNights,         SY.ovNum));
+      rows.push(BLK());
+
+      rows.push([sc('REVENUE — Confirmed Bookings', SY.secHdr), ...Array(NCOLS-1).fill(ec(SY.secHdr))]);
+      rows.push(['Reference','Guest Name','Room / Unit','Check-in','Check-out','Nights','Amount','Payment'].map(h => sc(h, SY.colHdr)));
+      if (bookings.length === 0) {
+        rows.push([sc('No confirmed bookings in this period.', SY.data), ...Array(NCOLS-1).fill(ec(SY.data))]);
+      } else {
+        bookings.forEach((b, i) => {
+          const alt = i % 2 === 1;
+          rows.push([
+            sc(b.referenceNo||'', alt?SY.dataA:SY.data),
+            sc(b.guestName||'', alt?SY.dataA:SY.data),
+            sc(b.unitName||'', alt?SY.dataA:SY.data),
+            sc(b.checkIn||'', alt?SY.dataA:SY.data),
+            sc(b.checkOut||'', alt?SY.dataA:SY.data),
+            sc(pnum(b.nights), alt?SY.numA:SY.num),
+            sc(pstr(b.grandTotal), alt?SY.numA:SY.num),
+            sc(b.paymentMethod||'', alt?SY.dataA:SY.data),
+          ]);
+        });
+        rows.push([ec(SY.totLbl),ec(SY.totLbl),ec(SY.totLbl),ec(SY.totLbl),ec(SY.totLbl),sc('TOTAL:',SY.totLbl),sc(pstr(totalRevenue),SY.totNum),ec(SY.totLbl)]);
+      }
+      rows.push(BLK());
+
+      rows.push([sc('EXPENSES', SY.secHdr), ...Array(NCOLS-1).fill(ec(SY.secHdr))]);
+      rows.push(['Date','Category','Description','Amount','Unit / Property','','',''].map((h,i) => i<5 ? sc(h,SY.colHdr) : ec(SY.blank)));
+      if (expenses.length === 0) {
+        rows.push([sc('No expenses in this period.', SY.data), ...Array(NCOLS-1).fill(ec(SY.data))]);
+      } else {
+        expenses.forEach((e, i) => {
+          const alt = i % 2 === 1;
+          rows.push([
+            sc(e.date||'', alt?SY.dataA:SY.data),
+            sc(e.category||'', alt?SY.dataA:SY.data),
+            sc(e.description||'', alt?SY.dataA:SY.data),
+            sc(pstr(e.amount), alt?SY.numA:SY.num),
+            sc(e.unitName||'All Units', alt?SY.dataA:SY.data),
+            ec(SY.blank),ec(SY.blank),ec(SY.blank),
+          ]);
+        });
+        rows.push([ec(SY.totLbl),ec(SY.totLbl),sc('TOTAL:',SY.totLbl),sc(pstr(totalExpenses),SY.totNum),ec(SY.totLbl),ec(SY.blank),ec(SY.blank),ec(SY.blank)]);
+      }
+      rows.push(BLK());
+
+      rows.push([sc('SUMMARY', SY.secHdr), ...Array(NCOLS-1).fill(ec(SY.secHdr))]);
+      rows.push([sc('', SY.colHdr), sc('Amount', SY.colHdr), ...Array(NCOLS-2).fill(ec(SY.blank))]);
+      rows.push([sc('Total Revenue',     SY.ovLbl), sc(pstr(totalRevenue),  SY.ovRev), ...Array(NCOLS-2).fill(ec(SY.blank))]);
+      rows.push([sc('Total Expenses',    SY.ovLbl), sc(pstr(totalExpenses), SY.ovExp), ...Array(NCOLS-2).fill(ec(SY.blank))]);
+      rows.push([sc('Net Profit / Loss', SY.ovNet), sc(pstr(netProfit),     SY.ovNet), ...Array(NCOLS-2).fill(ec(SY.blank))]);
+
+      const ws = XLSX.utils.aoa_to_sheet(rows.map(r => r.map(c => c.v)));
+      rows.forEach((row, ri) => {
+        row.forEach((c, ci) => {
+          if (!c || !c.s) return;
+          const addr = XLSX.utils.encode_cell({ r: ri, c: ci });
+          if (!ws[addr]) ws[addr] = {};
+          ws[addr].s = c.s;
+        });
+      });
+      ws['!cols'] = [{wch:24},{wch:20},{wch:20},{wch:13},{wch:13},{wch:8},{wch:16},{wch:16}];
+      ws['!rows'] = rows.map((_, i) => i === 0 ? {hpt:28} : {hpt:18});
+      ws['!merges'] = [
+        {s:{r:0,c:0}, e:{r:0,c:NCOLS-1}},
+        {s:{r:1,c:1}, e:{r:1,c:NCOLS-1}},
+        {s:{r:2,c:1}, e:{r:2,c:NCOLS-1}},
+        {s:{r:3,c:1}, e:{r:3,c:NCOLS-1}},
+        {s:{r:5,c:0}, e:{r:5,c:NCOLS-1}},
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Financial Report');
+      const filename = 'financial-report-' + periodLabel.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9-]/g,'') + '.xlsx';
+      XLSX.writeFile(wb, filename);
+      showToast('Report downloaded!', 'success');
+
+    } catch (err) {
+      showToast('Report failed: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-file-arrow-down"></i> Download Report';
+    }
+  });
+
+  function q(v) {
+    const s = String(v ?? '');
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+
+  function php(n) { return '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 0 }); }
+  function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+  function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function showToast(msg, type='info') {
+    const tc = document.getElementById('toast-container');
+    const t = document.createElement('div'); t.className = `toast ${type}`;
+    const icons = { success:'fa-circle-check', error:'fa-circle-exclamation', info:'fa-circle-info' };
+    t.innerHTML = `<i class="fa-solid ${icons[type]}"></i> ${esc(msg)}`;
+    tc.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); }, 4000);
+  }
+</script>
+</body>
+</html>

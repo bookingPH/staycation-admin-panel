@@ -1,0 +1,219 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add-ons — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="./admin-styles.css">
+</head>
+<body>
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name" id="sidebar-brand">Booking Admin</div>
+      <div class="sidebar-brand-tag">Management Panel</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="./dashboard.html"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a href="./bookings.html"><i class="fa-solid fa-calendar-check"></i> Bookings</a>
+      <a href="./calendar.html"><i class="fa-solid fa-calendar-days"></i> Calendar</a>
+      <a href="./blocking.html"><i class="fa-solid fa-ban"></i> Date Blocking</a>
+      <a href="./units.html"><i class="fa-solid fa-building"></i> Units</a>
+      <a href="./addons.html" class="active"><i class="fa-solid fa-circle-plus"></i> Add-ons</a>
+      <a href="./amenities.html"><i class="fa-solid fa-star"></i> Amenities</a>
+      <a href="./holiday-rates.html"><i class="fa-solid fa-tag"></i> Holiday Rates</a>
+      <a href="./expenses.html"><i class="fa-solid fa-receipt"></i> Expenses</a>
+      <a href="./design.html"><i class="fa-solid fa-palette"></i> Design</a>
+      <a href="./settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-email" id="admin-email">—</div>
+      <button class="btn-signout" id="signout-btn"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-header-left">
+        <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Extra Amenities &amp; Add-ons</span>
+      </div>
+      <button class="btn btn-primary" id="add-btn"><i class="fa-solid fa-plus"></i> Add Service Upsell</button>
+    </header>
+    <div class="page-body">
+      <p style="color:var(--muted);font-size:13px;margin-bottom:20px;">Set up optional upgrades guests can select during booking — e.g. breakfast, early check-in, airport transfer.</p>
+      <div class="card">
+        <div id="addons-container">
+          <div class="loading-state"><span class="spinner"></span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Extra Upsell Service</div>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Scope of Coverage</label>
+        <select class="form-control" id="addon-unit">
+          <option value="all">— Apply to All Units —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Add-on Name <span class="required">*</span></label>
+        <input type="text" class="form-control" id="addon-name" placeholder="e.g. Gourmet Breakfast">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label class="form-label">Amount (₱) <span class="required">*</span></label>
+          <input type="number" class="form-control" id="addon-price" placeholder="350" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Billing Rule</label>
+          <select class="form-control" id="addon-billing">
+            <option value="onetime">One-Time Fee</option>
+            <option value="pernight">Per Night</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="save-btn"><i class="fa-solid fa-floppy-disk"></i> Save Add-on</button>
+      <button class="btn btn-ghost" id="cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script type="module">
+  import { requireAuth, adminSignOut, getAdminFirebase } from './admin-auth.js';
+  import {
+    collection, onSnapshot, addDoc, deleteDoc, getDocs, doc, serverTimestamp, getDoc,
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('open');
+  });
+  document.getElementById('sidebar-overlay').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  });
+
+  const { user, clientId } = await requireAuth();
+  document.getElementById('admin-email').textContent = user.email;
+  document.getElementById('signout-btn').addEventListener('click', adminSignOut);
+  const { db } = getAdminFirebase();
+
+  try {
+    const pub = await getDoc(doc(db, 'clients', clientId, 'settings', 'public'));
+    if (pub.exists() && pub.data().companyName) document.getElementById('sidebar-brand').textContent = pub.data().companyName;
+  } catch (_) {}
+
+  // Load units for dropdown
+  let units = [];
+  try {
+    const snap = await getDocs(collection(db, 'clients', clientId, 'units'));
+    units = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const sel = document.getElementById('addon-unit');
+    units.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.id; opt.textContent = u.name;
+      sel.appendChild(opt);
+    });
+  } catch (_) {}
+
+  function openModal() {
+    document.getElementById('addon-name').value = '';
+    document.getElementById('addon-price').value = '';
+    document.getElementById('addon-unit').value = 'all';
+    document.getElementById('addon-billing').value = 'onetime';
+    document.getElementById('modal-backdrop').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('addon-name').focus();
+  }
+  function closeModal() {
+    document.getElementById('modal-backdrop').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('add-btn').addEventListener('click', openModal);
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('modal-backdrop').addEventListener('click', e => { if (e.target === document.getElementById('modal-backdrop')) closeModal(); });
+
+  document.getElementById('save-btn').addEventListener('click', async () => {
+    const name    = document.getElementById('addon-name').value.trim();
+    const price   = Number(document.getElementById('addon-price').value);
+    const unitId  = document.getElementById('addon-unit').value;
+    const billing = document.getElementById('addon-billing').value;
+    if (!name) { showToast('Name is required.', 'error'); return; }
+    if (!price || price < 0) { showToast('Enter a valid amount.', 'error'); return; }
+    const unitName = unitId === 'all' ? 'All Units' : (units.find(u => u.id === unitId)?.name || unitId);
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true;
+    try {
+      await addDoc(collection(db, 'clients', clientId, 'addons'), {
+        name, price, billingRule: billing, unitId, unitName, createdAt: serverTimestamp(),
+      });
+      showToast('Add-on saved!', 'success');
+      closeModal();
+    } catch (err) { showToast('Save failed: ' + err.message, 'error'); }
+    finally { btn.disabled = false; }
+  });
+
+  // Real-time list
+  onSnapshot(collection(db, 'clients', clientId, 'addons'), (snap) => {
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const container = document.getElementById('addons-container');
+    if (items.length === 0) {
+      container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-circle-plus"></i><p>No add-ons yet. Click "Add Service Upsell" to get started.</p></div>`;
+      return;
+    }
+    container.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Unit Coverage</th><th>Service Name</th><th>Rate Price</th><th>Billing</th><th>Control</th></tr></thead>
+      <tbody>${items.map(a => `
+        <tr>
+          <td style="color:var(--muted);font-size:13px;">${esc(a.unitName || a.unitId)}</td>
+          <td style="font-weight:600;">${esc(a.name)}</td>
+          <td style="font-weight:600;color:var(--primary);">₱${Number(a.price).toLocaleString()}</td>
+          <td><span style="font-size:12px;text-transform:uppercase;font-weight:600;color:var(--muted);">${a.billingRule === 'pernight' ? 'Per Night' : 'One-Time'}</span></td>
+          <td><button class="btn btn-sm btn-ghost" style="color:var(--danger);border-color:var(--danger);" data-id="${esc(a.id)}"><i class="fa-solid fa-trash"></i> Remove</button></td>
+        </tr>
+      `).join('')}</tbody>
+    </table></div>`;
+
+    container.querySelectorAll('[data-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Remove this add-on?')) return;
+        try {
+          await deleteDoc(doc(db, 'clients', clientId, 'addons', btn.dataset.id));
+          showToast('Add-on removed.', 'success');
+        } catch (err) { showToast('Delete failed: ' + err.message, 'error'); }
+      });
+    });
+  });
+
+  function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function showToast(msg, type='info') {
+    const tc = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    const icons = { success:'fa-circle-check', error:'fa-circle-exclamation', info:'fa-circle-info' };
+    t.innerHTML = `<i class="fa-solid ${icons[type]}"></i> ${esc(msg)}`;
+    tc.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); }, 4000);
+  }
+</script>
+</body>
+</html>
+

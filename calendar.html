@@ -1,0 +1,258 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendar — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
+  <link rel="stylesheet" href="./admin-styles.css">
+  <style>
+    #fc-wrapper { height: calc(100vh - 200px); min-height: 500px; }
+    .fc { font-family: 'Inter', sans-serif; font-size: 13px; }
+    .fc .fc-toolbar-title { font-size: 18px; font-weight: 700; color: #1e293b; }
+    .fc .fc-button { background: var(--surface); color: var(--text); border: 1px solid var(--border); font-size: 12px; padding: 5px 10px; }
+    .fc .fc-button:hover { background: var(--bg); }
+    .fc .fc-button-primary:not(:disabled).fc-button-active,
+    .fc .fc-button-primary:not(:disabled):active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .fc-event { border-radius: 4px !important; border: none !important; font-size: 11px !important; padding: 1px 5px !important; cursor: pointer; }
+    .fc-event.ev-confirmed  { background: #059669 !important; }
+    .fc-event.ev-pending    { background: #d97706 !important; }
+    .fc-event.ev-blocked    { background: #dc2626 !important; }
+    .fc-event.ev-expired    { background: #94a3b8 !important; }
+    .fc-daygrid-day-number  { font-size: 12px; color: var(--muted); }
+    .fc-day-today { background: #fef9f0 !important; }
+  </style>
+</head>
+<body>
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name" id="sidebar-brand">Booking Admin</div>
+      <div class="sidebar-brand-tag">Management Panel</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="./dashboard.html"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a href="./bookings.html"><i class="fa-solid fa-calendar-check"></i> Bookings</a>
+      <a href="./calendar.html" class="active"><i class="fa-solid fa-calendar-days"></i> Calendar</a>
+      <a href="./blocking.html"><i class="fa-solid fa-ban"></i> Date Blocking</a>
+      <a href="./units.html"><i class="fa-solid fa-building"></i> Units</a>
+      <a href="./addons.html"><i class="fa-solid fa-circle-plus"></i> Add-ons</a>
+      <a href="./amenities.html"><i class="fa-solid fa-star"></i> Amenities</a>
+      <a href="./holiday-rates.html"><i class="fa-solid fa-tag"></i> Holiday Rates</a>
+      <a href="./expenses.html"><i class="fa-solid fa-receipt"></i> Expenses</a>
+      <a href="./design.html"><i class="fa-solid fa-palette"></i> Design</a>
+      <a href="./settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-email" id="admin-email">—</div>
+      <button class="btn-signout" id="signout-btn"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-header-left">
+        <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Interactive Reservation Calendar</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <div class="cal-legend">
+          <div class="cal-legend-item"><span class="cal-legend-dot" style="background:#059669;"></span> Confirmed</div>
+          <div class="cal-legend-item"><span class="cal-legend-dot" style="background:#d97706;"></span> Pending</div>
+          <div class="cal-legend-item"><span class="cal-legend-dot" style="background:#dc2626;"></span> Blocked</div>
+          <div class="cal-legend-item"><span class="cal-legend-dot" style="background:#94a3b8;"></span> Expired</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <!-- Unit filter -->
+      <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <label style="font-size:13px;font-weight:600;color:var(--muted);">Filter by Unit:</label>
+        <select class="form-control" id="unit-filter" style="width:auto;min-width:180px;font-size:13px;">
+          <option value="all">All Units</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div id="fc-wrapper">
+            <div id="fc-calendar"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Booking Detail Modal -->
+<div class="modal-backdrop" id="detail-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="detail-title">Booking Details</div>
+      <button class="modal-close" id="detail-close">&times;</button>
+    </div>
+    <div class="modal-body" id="detail-body">—</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="detail-cancel">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script type="module">
+  import { requireAuth, adminSignOut, getAdminFirebase } from './admin-auth.js';
+  import {
+    collection, onSnapshot, getDocs, doc, getDoc,
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('open');
+  });
+  document.getElementById('sidebar-overlay').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  });
+
+  const { user, clientId } = await requireAuth();
+  document.getElementById('admin-email').textContent = user.email;
+  document.getElementById('signout-btn').addEventListener('click', adminSignOut);
+  const { db } = getAdminFirebase();
+
+  try {
+    const pub = await getDoc(doc(db, 'clients', clientId, 'settings', 'public'));
+    if (pub.exists() && pub.data().companyName) document.getElementById('sidebar-brand').textContent = pub.data().companyName;
+  } catch (_) {}
+
+  // Load units for filter
+  let units = [];
+  try {
+    const snap = await getDocs(collection(db, 'clients', clientId, 'units'));
+    units = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const sel = document.getElementById('unit-filter');
+    units.forEach(u => { const o = document.createElement('option'); o.value = u.id; o.textContent = u.name; sel.appendChild(o); });
+  } catch (_) {}
+
+  let allBookings = [], allBlocked = [];
+  let calendar;
+
+  // Init FullCalendar
+  calendar = new FullCalendar.Calendar(document.getElementById('fc-calendar'), {
+    initialView: 'dayGridMonth',
+    height: '100%',
+    headerToolbar: {
+      left:   'prev,next today',
+      center: 'title',
+      right:  'dayGridMonth,timeGridWeek,listMonth',
+    },
+    buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
+    eventClick(info) {
+      const props = info.event.extendedProps;
+      if (props.type === 'booking') {
+        const b = props.booking;
+        document.getElementById('detail-title').textContent = `Booking — ${b.guestName || '—'}`;
+        document.getElementById('detail-body').innerHTML = `
+          <div style="display:grid;gap:8px;font-size:13px;">
+            <div><strong>Guest:</strong> ${esc(b.guestName || '—')}</div>
+            <div><strong>Unit:</strong> ${esc(b.unitName || '—')}</div>
+            <div><strong>Check-in:</strong> ${esc(b.checkIn || '—')}</div>
+            <div><strong>Check-out:</strong> ${esc(b.checkOut || '—')}</div>
+            <div><strong>Guests:</strong> ${esc(b.numGuests || '—')}</div>
+            <div><strong>Contact:</strong> ${esc(b.guestPhone || b.guestEmail || '—')}</div>
+            <div><strong>Status:</strong> <span style="font-weight:700;text-transform:capitalize;">${esc(b.status || '—')}</span></div>
+            <div><strong>Ref #:</strong> ${esc(b.referenceNumber || '—')}</div>
+            ${b.totalAmount ? `<div><strong>Amount:</strong> ₱${Number(b.totalAmount).toLocaleString()}</div>` : ''}
+          </div>
+        `;
+      } else {
+        const bl = props.block;
+        document.getElementById('detail-title').textContent = `Blocked — ${bl.reason || '—'}`;
+        document.getElementById('detail-body').innerHTML = `
+          <div style="display:grid;gap:8px;font-size:13px;">
+            <div><strong>Unit:</strong> ${esc(bl.unitName || bl.unitId || 'All Units')}</div>
+            <div><strong>Start:</strong> ${esc(bl.startDate)}</div>
+            <div><strong>End:</strong> ${esc(bl.endDate)}</div>
+            <div><strong>Reason:</strong> ${esc(bl.reason || '—')}</div>
+            ${bl.remarks ? `<div><strong>Remarks:</strong> ${esc(bl.remarks)}</div>` : ''}
+          </div>
+        `;
+      }
+      document.getElementById('detail-backdrop').classList.add('open');
+    },
+    eventMouseEnter(info) { info.el.style.opacity = '0.85'; },
+    eventMouseLeave(info)  { info.el.style.opacity = '1'; },
+  });
+  calendar.render();
+
+  // Detail modal close
+  document.getElementById('detail-close').addEventListener('click', () => document.getElementById('detail-backdrop').classList.remove('open'));
+  document.getElementById('detail-cancel').addEventListener('click', () => document.getElementById('detail-backdrop').classList.remove('open'));
+  document.getElementById('detail-backdrop').addEventListener('click', e => { if (e.target === document.getElementById('detail-backdrop')) document.getElementById('detail-backdrop').classList.remove('open'); });
+
+  // Unit filter
+  document.getElementById('unit-filter').addEventListener('change', () => rebuildEvents());
+
+  function rebuildEvents() {
+    calendar.removeAllEvents();
+    const filterUnit = document.getElementById('unit-filter').value;
+
+    // Bookings
+    allBookings.forEach(b => {
+      if (filterUnit !== 'all' && b.unitId && b.unitId !== filterUnit) return;
+      if (!b.checkIn || !b.checkOut) return;
+      const cls = b.status === 'confirmed' ? 'ev-confirmed'
+                : b.status === 'pending'   ? 'ev-pending'
+                : b.status === 'expired'   ? 'ev-expired'
+                : 'ev-pending';
+      calendar.addEvent({
+        title: `${b.guestName || 'Guest'} · ${b.unitName || ''}`,
+        start: b.checkIn,
+        end:   b.checkOut,
+        allDay: true,
+        classNames: [`fc-event`, cls],
+        extendedProps: { type: 'booking', booking: b },
+      });
+    });
+
+    // Blocked dates
+    allBlocked.forEach(bl => {
+      if (filterUnit !== 'all' && bl.unitId !== 'all' && bl.unitId !== filterUnit) return;
+      const endExcl = addDays(bl.endDate, 1);
+      calendar.addEvent({
+        title: `🔒 ${bl.reason || 'Blocked'} · ${bl.unitName || 'All'}`,
+        start: bl.startDate,
+        end:   endExcl,
+        allDay: true,
+        classNames: ['fc-event', 'ev-blocked'],
+        extendedProps: { type: 'block', block: bl },
+      });
+    });
+  }
+
+  function addDays(dateStr, n) {
+    const d = new Date(dateStr + 'T00:00:00');
+    d.setDate(d.getDate() + n);
+    return d.toLocaleDateString('en-CA');
+  }
+
+  // Real-time listeners
+  onSnapshot(collection(db, 'clients', clientId, 'bookings'), (snap) => {
+    allBookings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    rebuildEvents();
+  });
+  onSnapshot(collection(db, 'clients', clientId, 'blocked_dates'), (snap) => {
+    allBlocked = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    rebuildEvents();
+  });
+
+  function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>
+

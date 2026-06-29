@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Holiday Rates — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="./admin-styles.css">
+</head>
+<body>
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name" id="sidebar-brand">Booking Admin</div>
+      <div class="sidebar-brand-tag">Management Panel</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="./dashboard.html"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a href="./bookings.html"><i class="fa-solid fa-calendar-check"></i> Bookings</a>
+      <a href="./calendar.html"><i class="fa-solid fa-calendar-days"></i> Calendar</a>
+      <a href="./blocking.html"><i class="fa-solid fa-ban"></i> Date Blocking</a>
+      <a href="./units.html"><i class="fa-solid fa-building"></i> Units</a>
+      <a href="./addons.html"><i class="fa-solid fa-circle-plus"></i> Add-ons</a>
+      <a href="./amenities.html"><i class="fa-solid fa-star"></i> Amenities</a>
+      <a href="./holiday-rates.html" class="active"><i class="fa-solid fa-tag"></i> Holiday Rates</a>
+      <a href="./expenses.html"><i class="fa-solid fa-receipt"></i> Expenses</a>
+      <a href="./design.html"><i class="fa-solid fa-palette"></i> Design</a>
+      <a href="./settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-email" id="admin-email">—</div>
+      <button class="btn-signout" id="signout-btn"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-header-left">
+        <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Holiday / Peak Rates</span>
+      </div>
+      <button class="btn btn-primary" id="add-btn"><i class="fa-solid fa-plus"></i> Add Holiday Rate</button>
+    </header>
+
+    <div class="page-body">
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-body" style="padding:12px 20px;font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:flex-start;">
+          <i class="fa-solid fa-circle-info" style="color:var(--primary);margin-top:2px;flex-shrink:0;"></i>
+          <span>Set a custom rate for specific dates (e.g. Christmas, New Year, long weekends). This rate overrides the unit's regular weekday and weekend rate on that date. Guests will see this reflected in their price breakdown.</span>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-body" style="padding:12px 20px;">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600;letter-spacing:0.04em;">FILTER EXISTING RATES</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <select class="form-control" id="filter-unit" style="width:auto;min-width:160px;">
+              <option value="">All Units</option>
+            </select>
+            <input type="month" class="form-control" id="filter-month" style="width:auto;" placeholder="Filter by month">
+            <button class="btn btn-ghost" id="clear-filter-btn">Clear</button>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:8px;">To add a new rate for a specific date, click <strong>+ Add Holiday Rate</strong> above.</div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="card">
+        <div id="rates-container">
+          <div class="loading-state"><span class="spinner"></span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Add Holiday Rate</div>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Unit <span class="required">*</span></label>
+        <select class="form-control" id="hr-unit">
+          <option value="all">All Units</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date <span class="required">*</span></label>
+        <input type="date" class="form-control" id="hr-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Label (optional)</label>
+        <input type="text" class="form-control" id="hr-label" placeholder="e.g. Christmas Eve, New Year, Long Weekend">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Peak Rate (₱) <span class="required">*</span></label>
+        <input type="number" class="form-control" id="hr-rate" placeholder="0" min="0">
+        <div class="form-hint">This rate replaces the regular weekday/weekend rate on this date.</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="save-btn"><i class="fa-solid fa-floppy-disk"></i> Save Rate</button>
+      <button class="btn btn-ghost" id="cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script type="module">
+  import { requireAuth, adminSignOut, getAdminFirebase } from './admin-auth.js';
+  import {
+    collection, onSnapshot, addDoc, deleteDoc, getDocs, doc, serverTimestamp,
+    orderBy, query, getDoc,
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('open');
+  });
+  document.getElementById('sidebar-overlay').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  });
+
+  const { user, clientId } = await requireAuth();
+  document.getElementById('admin-email').textContent = user.email;
+  document.getElementById('signout-btn').addEventListener('click', adminSignOut);
+  const { db } = getAdminFirebase();
+
+  try {
+    const pub = await getDoc(doc(db, 'clients', clientId, 'settings', 'public'));
+    if (pub.exists() && pub.data().companyName) document.getElementById('sidebar-brand').textContent = pub.data().companyName;
+  } catch (_) {}
+
+  // Load units for dropdowns
+  let units = [];
+  try {
+    const snap = await getDocs(collection(db, 'clients', clientId, 'units'));
+    units = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    [document.getElementById('filter-unit'), document.getElementById('hr-unit')].forEach(sel => {
+      units.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id; opt.textContent = u.name; sel.appendChild(opt);
+      });
+    });
+  } catch (_) {}
+
+  let allRates = [];
+  let filterUnit = '', filterMonth = '';
+
+  document.getElementById('filter-unit').addEventListener('change', e => { filterUnit = e.target.value; renderRates(); });
+  document.getElementById('filter-month').addEventListener('change', e => { filterMonth = e.target.value; renderRates(); });
+  document.getElementById('clear-filter-btn').addEventListener('click', () => {
+    filterUnit = ''; filterMonth = '';
+    document.getElementById('filter-unit').value = '';
+    document.getElementById('filter-month').value = '';
+    renderRates();
+  });
+
+  onSnapshot(query(collection(db, 'clients', clientId, 'holiday_rates'), orderBy('date', 'asc')), snap => {
+    allRates = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderRates();
+  });
+
+  function renderRates() {
+    let list = allRates;
+    if (filterUnit) list = list.filter(r => r.unitId === filterUnit || r.unitId === 'all');
+    if (filterMonth) list = list.filter(r => r.date && r.date.startsWith(filterMonth));
+
+    const container = document.getElementById('rates-container');
+    if (list.length === 0) {
+      container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-tag"></i><p>No holiday rates set.</p></div>`;
+      return;
+    }
+
+    container.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Label</th><th>Unit</th><th>Peak Rate</th><th></th></tr></thead>
+      <tbody>${list.map(r => {
+        const unitName = r.unitId === 'all' ? 'All Units' : (units.find(u => u.id === r.unitId)?.name || r.unitId);
+        return `<tr>
+          <td style="font-weight:600;">${esc(r.date)}</td>
+          <td>${r.label ? `<span style="background:var(--primary);color:#fff;border-radius:12px;padding:2px 10px;font-size:12px;">${esc(r.label)}</span>` : '<span style="color:var(--muted);">—</span>'}</td>
+          <td style="color:var(--muted);font-size:13px;">${esc(unitName)}</td>
+          <td style="font-weight:700;color:var(--success);">${php(r.rate)}</td>
+          <td><button class="btn btn-sm btn-ghost" style="color:var(--danger);" data-id="${esc(r.id)}"><i class="fa-solid fa-trash"></i></button></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`;
+
+    container.querySelectorAll('[data-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this holiday rate?')) return;
+        try { await deleteDoc(doc(db, 'clients', clientId, 'holiday_rates', btn.dataset.id)); showToast('Deleted.', 'success'); }
+        catch (err) { showToast('Delete failed: ' + err.message, 'error'); }
+      });
+    });
+  }
+
+  // Modal
+  function openModal() {
+    document.getElementById('hr-date').value = '';
+    document.getElementById('hr-label').value = '';
+    document.getElementById('hr-rate').value = '';
+    document.getElementById('hr-unit').value = 'all';
+    document.getElementById('modal-backdrop').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('hr-date').focus();
+  }
+  function closeModal() { document.getElementById('modal-backdrop').classList.remove('open'); document.body.style.overflow = ''; }
+  document.getElementById('add-btn').addEventListener('click', openModal);
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('modal-backdrop').addEventListener('click', e => { if (e.target === document.getElementById('modal-backdrop')) closeModal(); });
+
+  document.getElementById('save-btn').addEventListener('click', async () => {
+    const date   = document.getElementById('hr-date').value;
+    const label  = document.getElementById('hr-label').value.trim();
+    const rate   = Number(document.getElementById('hr-rate').value);
+    const unitId = document.getElementById('hr-unit').value;
+    if (!date || !rate || rate <= 0) { showToast('Date and rate are required.', 'error'); return; }
+
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true;
+    try {
+      await addDoc(collection(db, 'clients', clientId, 'holiday_rates'), {
+        date, label: label || null, rate, unitId, createdAt: serverTimestamp(),
+      });
+      showToast('Holiday rate saved!', 'success');
+      closeModal();
+    } catch (err) { showToast('Save failed: ' + err.message, 'error'); }
+    finally { btn.disabled = false; }
+  });
+
+  function php(n) { return '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 0 }); }
+  function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function showToast(msg, type='info') {
+    const tc = document.getElementById('toast-container');
+    const t = document.createElement('div'); t.className = `toast ${type}`;
+    const icons = { success:'fa-circle-check', error:'fa-circle-exclamation', info:'fa-circle-info' };
+    t.innerHTML = `<i class="fa-solid ${icons[type]}"></i> ${esc(msg)}`;
+    tc.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); }, 4000);
+  }
+</script>
+</body>
+</html>

@@ -1,5 +1,215 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Admin Panel</title></head>
-<body><h1>Admin panel — coming soon</h1></body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="./admin-styles.css">
+</head>
+<body>
+
+<div class="login-page">
+  <div class="login-card">
+
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <i class="fa-solid fa-house"></i>
+      </div>
+      <h1 id="brand-name">Booking Admin</h1>
+      <p>Sign in to your account</p>
+    </div>
+
+    <!-- Error / success messages -->
+    <div class="login-error" id="error-msg"></div>
+    <div class="login-success" id="success-msg"></div>
+
+    <!-- Sign-in form -->
+    <form id="login-form">
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address</label>
+        <input type="email" id="email" class="form-control" placeholder="admin@example.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="masked-field">
+          <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+          <button type="button" class="masked-toggle" id="toggle-pw" title="Show password">
+            <i class="fa-regular fa-eye" id="toggle-pw-icon"></i>
+          </button>
+        </div>
+      </div>
+
+      <a href="#" class="forgot-link" id="forgot-link">Forgot password?</a>
+
+      <button type="submit" class="btn btn-primary btn-block" id="login-btn">
+        <span id="login-btn-text">Sign In</span>
+        <span id="login-btn-spinner" class="spinner" style="display:none;width:14px;height:14px;border-width:2px;"></span>
+      </button>
+    </form>
+
+    <!-- Forgot password panel (hidden by default) -->
+    <div id="forgot-panel" style="display:none; margin-top:20px; padding-top:20px; border-top:1px solid var(--border);">
+      <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
+        Enter your email address and we'll send you a password reset link.
+      </p>
+      <div class="form-group">
+        <input type="email" id="reset-email" class="form-control" placeholder="admin@example.com">
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-primary" id="send-reset-btn" style="flex:1;">Send Reset Link</button>
+        <button class="btn btn-ghost" id="cancel-reset-btn">Cancel</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    sendPasswordResetEmail,
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { FIREBASE_CONFIG } from './firebase-config.js';
+
+  const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  const loginForm    = document.getElementById('login-form');
+  const loginBtn     = document.getElementById('login-btn');
+  const loginBtnText = document.getElementById('login-btn-text');
+  const loginSpinner = document.getElementById('login-btn-spinner');
+  const errorMsg     = document.getElementById('error-msg');
+  const successMsg   = document.getElementById('success-msg');
+
+  // --- If already signed in, redirect immediately
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      // Verify they have an admins doc before redirecting
+      try {
+        const snap = await getDoc(doc(db, 'admins', user.email));
+        if (snap.exists()) {
+          window.location.replace('./dashboard.html');
+        }
+      } catch (_) {}
+    }
+  });
+
+  // --- Try to load brand name from Firestore for first-time UX
+  (async () => {
+    try {
+      // We don't know the clientId on the login page, so skip this for now
+    } catch (_) {}
+  })();
+
+  // --- Show/hide password toggle
+  document.getElementById('toggle-pw').addEventListener('click', () => {
+    const pw = document.getElementById('password');
+    const icon = document.getElementById('toggle-pw-icon');
+    if (pw.type === 'password') {
+      pw.type = 'text';
+      icon.className = 'fa-regular fa-eye-slash';
+    } else {
+      pw.type = 'password';
+      icon.className = 'fa-regular fa-eye';
+    }
+  });
+
+  // --- Login form submit
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    setLoading(true);
+    showError('');
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      window.location.replace('./dashboard.html');
+    } catch (err) {
+      setLoading(false);
+      showError(friendlyAuthError(err.code));
+    }
+  });
+
+  // --- Forgot password toggle
+  document.getElementById('forgot-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('forgot-panel').style.display = 'block';
+    document.getElementById('login-form').style.display = 'none';
+    // Pre-fill with current email if typed
+    const typed = document.getElementById('email').value.trim();
+    if (typed) document.getElementById('reset-email').value = typed;
+  });
+
+  document.getElementById('cancel-reset-btn').addEventListener('click', () => {
+    document.getElementById('forgot-panel').style.display = 'none';
+    document.getElementById('login-form').style.display = 'block';
+  });
+
+  document.getElementById('send-reset-btn').addEventListener('click', async () => {
+    const email = document.getElementById('reset-email').value.trim();
+    if (!email) return;
+    const btn = document.getElementById('send-reset-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    showError('');
+    showSuccess('');
+    try {
+      await sendPasswordResetEmail(auth, email);
+      showSuccess('Reset link sent! Check your email inbox.');
+      document.getElementById('forgot-panel').style.display = 'none';
+      document.getElementById('login-form').style.display = 'block';
+    } catch (err) {
+      // Never reveal whether the email exists
+      showSuccess('If that email is registered, you\'ll receive a reset link shortly.');
+      document.getElementById('forgot-panel').style.display = 'none';
+      document.getElementById('login-form').style.display = 'block';
+    }
+    btn.disabled = false;
+    btn.textContent = 'Send Reset Link';
+  });
+
+  // --- Helpers
+  function setLoading(on) {
+    loginBtn.disabled = on;
+    loginBtnText.textContent = on ? 'Signing in…' : 'Sign In';
+    loginSpinner.style.display = on ? 'inline-block' : 'none';
+  }
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.classList.toggle('show', !!msg);
+    successMsg.classList.remove('show');
+  }
+
+  function showSuccess(msg) {
+    successMsg.textContent = msg;
+    successMsg.classList.toggle('show', !!msg);
+    errorMsg.classList.remove('show');
+  }
+
+  function friendlyAuthError(code) {
+    if (['auth/wrong-password','auth/user-not-found','auth/invalid-credential',
+         'auth/invalid-email'].includes(code)) {
+      return 'Invalid email or password. Please try again.';
+    }
+    if (code === 'auth/too-many-requests') {
+      return 'Too many failed attempts. Please wait a few minutes before trying again.';
+    }
+    if (code === 'auth/network-request-failed') {
+      return 'Network error. Please check your internet connection.';
+    }
+    return 'Sign-in failed. Please try again.';
+  }
+</script>
+</body>
 </html>

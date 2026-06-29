@@ -1,0 +1,473 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="./admin-styles.css">
+  <style>
+    .design-section { margin-bottom: 28px; }
+    .design-section-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .design-section-title i { color: var(--primary); }
+    .colors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .toggles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  </style>
+</head>
+<body>
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name" id="sidebar-brand">Booking Admin</div>
+      <div class="sidebar-brand-tag">Management Panel</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="./dashboard.html"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a href="./bookings.html"><i class="fa-solid fa-calendar-check"></i> Bookings</a>
+      <a href="./calendar.html"><i class="fa-solid fa-calendar-days"></i> Calendar</a>
+      <a href="./blocking.html"><i class="fa-solid fa-ban"></i> Date Blocking</a>
+      <a href="./units.html"><i class="fa-solid fa-building"></i> Units</a>
+      <a href="./addons.html"><i class="fa-solid fa-circle-plus"></i> Add-ons</a>
+      <a href="./amenities.html"><i class="fa-solid fa-star"></i> Amenities</a>
+      <a href="./holiday-rates.html"><i class="fa-solid fa-tag"></i> Holiday Rates</a>
+      <a href="./expenses.html"><i class="fa-solid fa-receipt"></i> Expenses</a>
+      <a href="./design.html" class="active"><i class="fa-solid fa-palette"></i> Design</a>
+      <a href="./settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-email" id="admin-email">—</div>
+      <button class="btn-signout" id="signout-btn"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-header-left">
+        <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">Design &amp; UI Control</span>
+      </div>
+      <button class="btn btn-primary" id="save-all-btn"><i class="fa-solid fa-floppy-disk"></i> Save All Changes</button>
+    </header>
+
+    <div class="page-body">
+      <div class="loading-state" id="main-loading"><span class="spinner"></span></div>
+      <div id="design-content" style="display:none;">
+
+        <!-- Colors -->
+        <div class="card design-section">
+          <div class="card-header">
+            <span class="card-title"><i class="fa-solid fa-palette"></i> Brand Colors</span>
+          </div>
+          <div class="card-body">
+            <div class="colors-grid">
+              <div class="color-field">
+                <label class="form-label">Primary Color</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input type="color" id="c-primary" value="#C8623A" style="width:44px;height:36px;border:none;border-radius:6px;cursor:pointer;padding:2px;">
+                  <input type="text" class="form-control color-field-hex" id="c-primary-hex" value="#C8623A" placeholder="#C8623A">
+                </div>
+              </div>
+              <div class="color-field">
+                <label class="form-label">Primary Text Color</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input type="color" id="c-primary-text" value="#ffffff" style="width:44px;height:36px;border:none;border-radius:6px;cursor:pointer;padding:2px;">
+                  <input type="text" class="form-control color-field-hex" id="c-primary-text-hex" value="#ffffff" placeholder="#ffffff">
+                </div>
+              </div>
+              <div class="color-field">
+                <label class="form-label">Secondary Color</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input type="color" id="c-secondary" value="#1a202c" style="width:44px;height:36px;border:none;border-radius:6px;cursor:pointer;padding:2px;">
+                  <input type="text" class="form-control color-field-hex" id="c-secondary-hex" value="#1a202c" placeholder="#1a202c">
+                </div>
+              </div>
+              <div class="color-field">
+                <label class="form-label">Secondary Text Color</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input type="color" id="c-secondary-text" value="#ffffff" style="width:44px;height:36px;border:none;border-radius:6px;cursor:pointer;padding:2px;">
+                  <input type="text" class="form-control color-field-hex" id="c-secondary-text-hex" value="#ffffff" placeholder="#ffffff">
+                </div>
+              </div>
+              <div class="color-field">
+                <label class="form-label">Accent / Highlight Color</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input type="color" id="c-accent" value="#e8a87c" style="width:44px;height:36px;border:none;border-radius:6px;cursor:pointer;padding:2px;">
+                  <input type="text" class="form-control color-field-hex" id="c-accent-hex" value="#e8a87c" placeholder="#e8a87c">
+                </div>
+              </div>
+              <div class="color-field">
+                <label class="form-label">Error / Warning Color</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input type="color" id="c-error" value="#e53e3e" style="width:44px;height:36px;border:none;border-radius:6px;cursor:pointer;padding:2px;">
+                  <input type="text" class="form-control color-field-hex" id="c-error-hex" value="#e53e3e" placeholder="#e53e3e">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Typography -->
+        <div class="card design-section">
+          <div class="card-header"><span class="card-title"><i class="fa-solid fa-font"></i> Typography</span></div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div class="form-group">
+                <label class="form-label">Heading Font</label>
+                <select class="form-control" id="font-heading">
+                  <option value="Playfair Display">Playfair Display (Elegant)</option>
+                  <option value="Cormorant Garamond">Cormorant Garamond (Luxury)</option>
+                  <option value="Merriweather">Merriweather (Classic)</option>
+                  <option value="Montserrat">Montserrat (Modern)</option>
+                  <option value="Raleway">Raleway (Clean)</option>
+                  <option value="Inter">Inter (Minimal)</option>
+                  <option value="Lora">Lora (Editorial)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Body Font</label>
+                <select class="form-control" id="font-body">
+                  <option value="Inter">Inter (Clean)</option>
+                  <option value="Roboto">Roboto (Neutral)</option>
+                  <option value="Open Sans">Open Sans (Friendly)</option>
+                  <option value="Lato">Lato (Smooth)</option>
+                  <option value="Nunito">Nunito (Rounded)</option>
+                  <option value="Source Sans Pro">Source Sans Pro (Editorial)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Visibility -->
+        <div class="card design-section">
+          <div class="card-header"><span class="card-title"><i class="fa-solid fa-eye"></i> Section Visibility</span></div>
+          <div class="card-body">
+            <div class="toggles-grid">
+              <div class="toggle-row">
+                <div class="toggle-label">
+                  <div style="font-weight:600;font-size:14px;">Amenities Section</div>
+                  <div class="toggle-desc">Show the amenities grid on the booking page</div>
+                </div>
+                <label class="toggle-switch"><input type="checkbox" id="show-amenities" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-label">
+                  <div style="font-weight:600;font-size:14px;">How It Works Section</div>
+                  <div class="toggle-desc">Show the 3-step booking guide</div>
+                </div>
+                <label class="toggle-switch"><input type="checkbox" id="show-howitworks" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-label">
+                  <div style="font-weight:600;font-size:14px;">Featured Units Section</div>
+                  <div class="toggle-desc">Show the room/unit cards on the homepage</div>
+                </div>
+                <label class="toggle-switch"><input type="checkbox" id="show-featured" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-label">
+                  <div style="font-weight:600;font-size:14px;">CTA Banner Section</div>
+                  <div class="toggle-desc">Show the call-to-action promo banner</div>
+                </div>
+                <label class="toggle-switch"><input type="checkbox" id="show-cta" checked><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Images -->
+        <div class="card design-section">
+          <div class="card-header"><span class="card-title"><i class="fa-solid fa-image"></i> Hero Images</span></div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Upload multiple hero images that cycle as a slideshow on the booking page.</p>
+            <label class="btn btn-ghost" style="cursor:pointer;">
+              <i class="fa-solid fa-images"></i> Upload Images
+              <input type="file" id="hero-upload" accept="image/*" multiple style="display:none;">
+            </label>
+            <span id="hero-upload-status" style="font-size:12px;color:var(--muted);margin-left:8px;"></span>
+            <div class="hero-images-strip" id="hero-preview" style="margin-top:12px;"></div>
+            <input type="hidden" id="hero-urls" value="[]">
+          </div>
+        </div>
+
+        <!-- Promo Banner -->
+        <div class="card design-section">
+          <div class="card-header"><span class="card-title"><i class="fa-solid fa-megaphone"></i> Promo Banner Image</span></div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Optional banner image for the CTA section background.</p>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+              <label class="btn btn-ghost" style="cursor:pointer;">
+                <i class="fa-solid fa-upload"></i> Upload Banner
+                <input type="file" id="banner-upload" accept="image/*" style="display:none;">
+              </label>
+              <span id="banner-status" style="font-size:12px;color:var(--muted);"></span>
+            </div>
+            <div id="banner-preview" style="margin-top:12px;"></div>
+            <input type="hidden" id="banner-url" value="">
+          </div>
+        </div>
+
+        <!-- SEO -->
+        <div class="card design-section">
+          <div class="card-header"><span class="card-title"><i class="fa-solid fa-magnifying-glass"></i> SEO / Meta Tags</span></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Page Title (SEO)</label>
+              <input type="text" class="form-control" id="seo-title" placeholder="e.g. Lester Domain Staycation — Book Now">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Meta Keywords</label>
+              <input type="text" class="form-control" id="seo-keywords" placeholder="e.g. staycation, beach villa, booking, Batangas">
+            </div>
+            <div class="form-group">
+              <label class="form-label">OG Image URL (Social Share Preview)</label>
+              <input type="text" class="form-control" id="seo-og" placeholder="https://…">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script type="module">
+  import { requireAuth, adminSignOut, getAdminFirebase } from './admin-auth.js';
+  import {
+    doc, getDoc, setDoc, serverTimestamp,
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('open');
+  });
+  document.getElementById('sidebar-overlay').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  });
+
+  const { user, clientId } = await requireAuth();
+  document.getElementById('admin-email').textContent = user.email;
+  document.getElementById('signout-btn').addEventListener('click', adminSignOut);
+  const { db } = getAdminFirebase();
+
+  let heroUrls = [], bannerUrl = '';
+
+  // Load current settings
+  try {
+    const snap = await getDoc(doc(db, 'clients', clientId, 'settings', 'public'));
+    if (snap.exists()) {
+      const d = snap.data();
+      if (d.companyName) document.getElementById('sidebar-brand').textContent = d.companyName;
+
+      setColor('c-primary',        d.primaryColor        || '#C8623A');
+      setColor('c-primary-text',   d.primaryTextColor    || '#ffffff');
+      setColor('c-secondary',      d.secondaryColor      || '#1a202c');
+      setColor('c-secondary-text', d.secondaryTextColor  || '#ffffff');
+      setColor('c-accent',         d.accentColor         || '#e8a87c');
+      setColor('c-error',          d.errorColor          || '#e53e3e');
+
+      if (d.headingFont) setSelect('font-heading', d.headingFont);
+      if (d.bodyFont)    setSelect('font-body', d.bodyFont);
+
+      setCheck('show-amenities',  d.showAmenities  !== false);
+      setCheck('show-howitworks', d.showHowItWorks !== false);
+      setCheck('show-featured',   d.showFeaturedUnits !== false);
+      setCheck('show-cta',        d.showCTABanner !== false);
+
+      heroUrls = Array.isArray(d.heroImages) ? [...d.heroImages] : (d.heroImageUrl ? [d.heroImageUrl] : []);
+      document.getElementById('hero-urls').value = JSON.stringify(heroUrls);
+      renderHeroPreview();
+
+      bannerUrl = d.promoBannerUrl || '';
+      document.getElementById('banner-url').value = bannerUrl;
+      renderBannerPreview();
+
+      if (d.seoTitle)    document.getElementById('seo-title').value = d.seoTitle;
+      if (d.seoKeywords) document.getElementById('seo-keywords').value = d.seoKeywords;
+      if (d.seoOgImage)  document.getElementById('seo-og').value = d.seoOgImage;
+    }
+  } catch (err) { showToast('Could not load settings: ' + err.message, 'error'); }
+
+  document.getElementById('main-loading').style.display = 'none';
+  document.getElementById('design-content').style.display = '';
+
+  // Sync color picker <-> hex input
+  const colorPairs = [
+    ['c-primary','c-primary-hex'],
+    ['c-primary-text','c-primary-text-hex'],
+    ['c-secondary','c-secondary-hex'],
+    ['c-secondary-text','c-secondary-text-hex'],
+    ['c-accent','c-accent-hex'],
+    ['c-error','c-error-hex'],
+  ];
+  colorPairs.forEach(([pickerId, hexId]) => {
+    const picker = document.getElementById(pickerId);
+    const hex    = document.getElementById(hexId);
+    picker.addEventListener('input', () => { hex.value = picker.value; });
+    hex.addEventListener('change', () => {
+      if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) { picker.value = hex.value; }
+    });
+  });
+
+  // Hero image upload
+  document.getElementById('hero-upload').addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    const status = document.getElementById('hero-upload-status');
+    status.textContent = `Uploading ${files.length} image(s)…`;
+    try {
+      const token = await user.getIdToken();
+      const sigRes = await fetch('/.netlify/functions/get-upload-signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ clientId, type: 'public' }),
+      });
+      if (!sigRes.ok) throw new Error('Could not get upload signature');
+      const sig = await sigRes.json();
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('api_key', sig.apiKey);
+        fd.append('timestamp', sig.timestamp);
+        fd.append('signature', sig.signature);
+        fd.append('folder', sig.folder);
+        fd.append('allowed_formats', sig.allowedFormats);
+        fd.append('unique_filename', 'true');
+        fd.append('overwrite', 'false');
+        const up = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, { method: 'POST', body: fd });
+        if (!up.ok) throw new Error('Upload failed for ' + file.name);
+        const data = await up.json();
+        heroUrls.push(data.secure_url);
+      }
+      document.getElementById('hero-urls').value = JSON.stringify(heroUrls);
+      renderHeroPreview();
+      status.textContent = `${heroUrls.length} image(s) ready.`;
+    } catch (err) { showToast('Upload failed: ' + err.message, 'error'); status.textContent = ''; }
+    e.target.value = '';
+  });
+
+  function renderHeroPreview() {
+    const strip = document.getElementById('hero-preview');
+    strip.innerHTML = heroUrls.map((url, i) => `
+      <div class="hero-img-thumb">
+        <img src="${esc(url)}" alt="">
+        <button class="hero-img-remove" data-i="${i}" type="button">&times;</button>
+      </div>
+    `).join('');
+    strip.querySelectorAll('.hero-img-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        heroUrls.splice(Number(btn.dataset.i), 1);
+        document.getElementById('hero-urls').value = JSON.stringify(heroUrls);
+        renderHeroPreview();
+      });
+    });
+  }
+
+  // Banner image upload
+  document.getElementById('banner-upload').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const status = document.getElementById('banner-status');
+    status.textContent = 'Uploading…';
+    try {
+      const token = await user.getIdToken();
+      const sigRes = await fetch('/.netlify/functions/get-upload-signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ clientId, type: 'public' }),
+      });
+      if (!sigRes.ok) throw new Error('Could not get upload signature');
+      const sig = await sigRes.json();
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('api_key', sig.apiKey);
+      fd.append('timestamp', sig.timestamp);
+      fd.append('signature', sig.signature);
+      fd.append('folder', sig.folder);
+      fd.append('allowed_formats', sig.allowedFormats);
+      fd.append('unique_filename', 'true');
+      fd.append('overwrite', 'false');
+      const up = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, { method: 'POST', body: fd });
+      if (!up.ok) throw new Error('Upload failed');
+      const data = await up.json();
+      bannerUrl = data.secure_url;
+      document.getElementById('banner-url').value = bannerUrl;
+      renderBannerPreview();
+      status.textContent = 'Uploaded!';
+    } catch (err) { showToast('Upload failed: ' + err.message, 'error'); status.textContent = ''; }
+    e.target.value = '';
+  });
+
+  function renderBannerPreview() {
+    const el = document.getElementById('banner-preview');
+    if (!bannerUrl) { el.innerHTML = ''; return; }
+    el.innerHTML = `
+      <div class="hero-img-thumb" style="width:120px;height:70px;">
+        <img src="${esc(bannerUrl)}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" alt="">
+        <button class="hero-img-remove" id="banner-remove" type="button">&times;</button>
+      </div>
+    `;
+    document.getElementById('banner-remove').addEventListener('click', () => {
+      bannerUrl = '';
+      document.getElementById('banner-url').value = '';
+      renderBannerPreview();
+    });
+  }
+
+  // Save all
+  document.getElementById('save-all-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('save-all-btn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Saving…';
+    try {
+      const data = {
+        primaryColor:       document.getElementById('c-primary').value,
+        primaryTextColor:   document.getElementById('c-primary-text').value,
+        secondaryColor:     document.getElementById('c-secondary').value,
+        secondaryTextColor: document.getElementById('c-secondary-text').value,
+        accentColor:        document.getElementById('c-accent').value,
+        errorColor:         document.getElementById('c-error').value,
+        headingFont:        document.getElementById('font-heading').value,
+        bodyFont:           document.getElementById('font-body').value,
+        showAmenities:      document.getElementById('show-amenities').checked,
+        showHowItWorks:     document.getElementById('show-howitworks').checked,
+        showFeaturedUnits:  document.getElementById('show-featured').checked,
+        showCTABanner:      document.getElementById('show-cta').checked,
+        heroImages:         JSON.parse(document.getElementById('hero-urls').value || '[]'),
+        promoBannerUrl:     document.getElementById('banner-url').value,
+        seoTitle:           document.getElementById('seo-title').value.trim(),
+        seoKeywords:        document.getElementById('seo-keywords').value.trim(),
+        seoOgImage:         document.getElementById('seo-og').value.trim(),
+        updatedAt:          serverTimestamp(),
+      };
+      await setDoc(doc(db, 'clients', clientId, 'settings', 'public'), data, { merge: true });
+      showToast('Design settings saved!', 'success');
+    } catch (err) { showToast('Save failed: ' + err.message, 'error'); }
+    finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save All Changes'; }
+  });
+
+  function setColor(id, val) {
+    const picker = document.getElementById(id);
+    const hex    = document.getElementById(id + '-hex');
+    if (picker) picker.value = val;
+    if (hex)    hex.value = val;
+  }
+  function setSelect(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
+  function setCheck(id, checked) { const el = document.getElementById(id); if (el) el.checked = checked; }
+  function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function showToast(msg, type='info') {
+    const tc = document.getElementById('toast-container');
+    const t = document.createElement('div'); t.className = `toast ${type}`;
+    const icons = { success:'fa-circle-check', error:'fa-circle-exclamation', info:'fa-circle-info' };
+    t.innerHTML = `<i class="fa-solid ${icons[type]}"></i> ${esc(msg)}`;
+    tc.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); }, 4000);
+  }
+</script>
+</body>
+</html>
+
