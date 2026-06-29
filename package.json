@@ -1,0 +1,9 @@
+{
+  "name": "staycation-admin-panel",
+  "version": "1.0.0",
+  "description": "Admin panel for staycation booking system",
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "nodemailer": "^6.9.0"
+  }
+}
