@@ -118,10 +118,11 @@ function formatCurrency(amount) {
 // ---------------------------------------------------------------------------
 
 function createTransport(smtpEmail, smtpPassword) {
+  const port = Number(process.env.SMTP_PORT) || 587;
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: Number(process.env.SMTP_PORT) || 587,
-    secure: false,
+    port,
+    secure: port === 465,
     auth: { user: smtpEmail, pass: smtpPassword },
   });
 }

@@ -66,6 +66,7 @@ exports.handler = async (event) => {
     'bankName','bankAccountName','bankAccount','bankQrUrl',
     'downPaymentAmount','securityDeposit','checkInTime','checkOutTime',
     'bookingWebsiteUrl',
+    'policyBooking','policyCancellation','policyHouseRules','policyCheckinOut',
   ];
 
   if (pub && typeof pub === 'object') {
