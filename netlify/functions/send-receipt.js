@@ -76,13 +76,13 @@ function buildAdminHtml(settings, booking) {
         ['Grand Total', `<span style="font-size:18px;color:#C8623A;font-weight:700;">${formatCurrency(grandTotal)}</span>`, 'border-top:1px solid #eee;padding-top:12px;'],
       ])
     + (screenshotUrl ? `<p style="margin:0 0 12px;"><a href="${screenshotUrl}" style="background:#1a237e;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none;font-size:14px;font-weight:600;display:inline-block;">View Payment Screenshot</a></p>` : '')
-    + `<p style="margin:12px 0 0;"><a href="https://staycation-admin.netlify.app" style="background:#C8623A;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none;font-size:14px;font-weight:600;display:inline-block;">Open Admin Panel</a></p>`
+    + `<p style="margin:12px 0 0;"><a href="https://staycation-admin-ph.netlify.app" style="background:#C8623A;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none;font-size:14px;font-weight:600;display:inline-block;">Open Admin Panel</a></p>`
     + emailFooter(companyName);
 }
 
 function buildAdminText(settings, booking) {
   const { referenceNo, guestName, guestEmail, guestPhone, unitName, checkIn, checkOut, nights, grandTotal, paymentMethod, screenshotUrl } = booking;
-  return `NEW BOOKING REQUEST\n\nRef: ${referenceNo}\nRoom: ${unitName}\nGuest: ${guestName}\nEmail: ${guestEmail}\nPhone: ${guestPhone || '—'}\nCheck-in: ${formatDate(checkIn)}\nCheck-out: ${formatDate(checkOut)}\nNights: ${nights}\nPayment: ${paymentMethod}\nTotal: PHP ${Number(grandTotal).toFixed(2)}\n${screenshotUrl ? `\nScreenshot: ${screenshotUrl}` : ''}\n\nAdmin Panel: https://staycation-admin.netlify.app\n`;
+  return `NEW BOOKING REQUEST\n\nRef: ${referenceNo}\nRoom: ${unitName}\nGuest: ${guestName}\nEmail: ${guestEmail}\nPhone: ${guestPhone || '—'}\nCheck-in: ${formatDate(checkIn)}\nCheck-out: ${formatDate(checkOut)}\nNights: ${nights}\nPayment: ${paymentMethod}\nTotal: PHP ${Number(grandTotal).toFixed(2)}\n${screenshotUrl ? `\nScreenshot: ${screenshotUrl}` : ''}\n\nAdmin Panel: https://staycation-admin-ph.netlify.app\n`;
 }
 
 exports.handler = async (event) => {
@@ -186,7 +186,7 @@ exports.handler = async (event) => {
       `<b>Total:</b> ${formatCurrency(booking.grandTotal)}`,
       `<b>Payment:</b> ${booking.paymentMethod}`,
       booking.screenshotUrl ? `<b>Screenshot:</b> <a href="${booking.screenshotUrl}">View</a>` : null,
-      `<b>Admin Panel:</b> <a href="https://staycation-admin.netlify.app">Open</a>`,
+      `<b>Admin Panel:</b> <a href="https://staycation-admin-ph.netlify.app">Open</a>`,
     ].filter(Boolean).join('\n');
     sendTelegram(telegramToken, telegramChatId, msg).catch(err => console.error('Telegram error (non-fatal):', err.message));
   }

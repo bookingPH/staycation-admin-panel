@@ -21,8 +21,8 @@ const Timestamp = admin.firestore.Timestamp;
 // ---------------------------------------------------------------------------
 
 function corsHeaders(origin) {
-  const allowed = ['https://bookingph.github.io', 'https://staycation-admin.netlify.app'];
-  const allowOrigin = allowed.includes(origin) ? origin : 'https://staycation-admin.netlify.app';
+  const allowed = ['https://bookingph.github.io', 'https://staycation-admin-ph.netlify.app'];
+  const allowOrigin = allowed.includes(origin) ? origin : 'https://staycation-admin-ph.netlify.app';
   return {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Headers': 'Content-Type',

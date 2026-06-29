@@ -16,7 +16,7 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 const MASK = '••••••••';
 const CORS = {
-  'Access-Control-Allow-Origin': 'https://staycation-admin.netlify.app',
+  'Access-Control-Allow-Origin': 'https://staycation-admin-ph.netlify.app',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };

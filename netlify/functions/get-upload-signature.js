@@ -17,7 +17,7 @@ if (!admin.apps.length) {
 }
 
 const BOOKING_ORIGIN = 'https://bookingph.github.io';
-const ADMIN_ORIGIN   = 'https://staycation-admin.netlify.app';
+const ADMIN_ORIGIN   = 'https://staycation-admin-ph.netlify.app';
 
 function corsHeaders(origin) {
   const allowed = [BOOKING_ORIGIN, ADMIN_ORIGIN].includes(origin) ? origin : BOOKING_ORIGIN;
