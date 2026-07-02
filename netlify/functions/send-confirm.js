@@ -23,20 +23,20 @@ function buildPricingBreakdown(booking) {
   if (Array.isArray(booking.addons) && booking.addons.length > 0) {
     addonRows = booking.addons.map(a =>
       `<tr>
-        <td style="padding:4px 0;font-size:13px;color:#888;">${a.name}</td>
-        <td style="padding:4px 0;font-size:14px;color:#333;text-align:right;">${formatCurrency(a.total)}</td>
+        <td style="padding:4px 16px;font-size:13px;color:#888;">${a.name}</td>
+        <td style="padding:4px 16px;font-size:14px;color:#333;text-align:right;">${formatCurrency(a.total)}</td>
       </tr>`
     ).join('');
   }
   const extraGuestRow = booking.extraGuestTotal > 0 ? `
     <tr>
-      <td style="padding:4px 0;font-size:13px;color:#888;">Extra guests (${booking.extraGuests} pax)</td>
-      <td style="padding:4px 0;font-size:14px;color:#333;text-align:right;">${formatCurrency(booking.extraGuestTotal)}</td>
+      <td style="padding:4px 16px;font-size:13px;color:#888;">Extra guests (${booking.extraGuests} pax)</td>
+      <td style="padding:4px 16px;font-size:14px;color:#333;text-align:right;">${formatCurrency(booking.extraGuestTotal)}</td>
     </tr>` : '';
   const secDepRow = securityDeposit > 0 ? `
     <tr>
-      <td style="padding:4px 0;font-size:13px;color:#888;">Security deposit <em style="font-size:0.85em;">(refundable at checkout)</em></td>
-      <td style="padding:4px 0;font-size:14px;color:#333;text-align:right;">${formatCurrency(securityDeposit)}</td>
+      <td style="padding:4px 16px;font-size:13px;color:#888;">Security deposit <em style="font-size:0.85em;">(refundable at checkout)</em></td>
+      <td style="padding:4px 16px;font-size:14px;color:#333;text-align:right;">${formatCurrency(securityDeposit)}</td>
     </tr>` : '';
 
   return `<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;background:#f9f9f9;border-radius:6px;overflow:hidden;">

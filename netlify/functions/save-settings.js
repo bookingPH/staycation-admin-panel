@@ -47,10 +47,13 @@ exports.handler = async (event) => {
   const { clientId, public: pub, private: priv } = body;
   if (!clientId) return json(400, { error: 'clientId is required' });
 
-  // Verify ownership
+  // Verify ownership (or master admin, who can edit any client)
   try {
     const adminSnap = await db.doc(`admins/${decodedToken.email}`).get();
-    if (!adminSnap.exists || adminSnap.data().clientId !== clientId) {
+    const adminData = adminSnap.exists ? adminSnap.data() : null;
+    const isOwner = adminData && adminData.clientId === clientId;
+    const isMaster = adminData && adminData.role === 'master';
+    if (!isOwner && !isMaster) {
       return json(403, { error: 'Access denied' });
     }
   } catch {

@@ -163,6 +163,11 @@ exports.handler = async (event) => {
     return json(500, { error: 'Failed to fetch client settings' });
   }
 
+  // --- Master kill switch: hard-block new bookings for a suspended client ---
+  if (settings.suspended === true) {
+    return json(403, { error: 'This booking site is currently unavailable. Please contact the property directly.' });
+  }
+
   // --- Fetch selected addons ---
   let selectedAddons = [];
   if (Array.isArray(addonIds) && addonIds.length > 0) {

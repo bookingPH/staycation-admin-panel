@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Switch Client — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="icon" type="image/png" href="./favicon.png">
+  <link rel="stylesheet" href="./admin-styles.css">
+</head>
+<body>
+
+<div class="login-page">
+  <div class="login-card" style="max-width:460px;">
+
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <i class="fa-solid fa-right-left"></i>
+      </div>
+      <h1>Switch Client</h1>
+      <p>Pick a T4 client to enter their admin panel</p>
+    </div>
+
+    <div id="client-list">
+      <div class="loading-state"><span class="spinner"></span></div>
+    </div>
+
+    <a href="./master-dashboard.html" class="btn btn-ghost btn-block" style="margin-top:16px;">
+      <i class="fa-solid fa-arrow-left"></i> Back to Master Dashboard
+    </a>
+
+  </div>
+</div>
+
+<script type="module">
+  import { requireMasterAuth } from './admin-auth.js';
+  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { FIREBASE_CONFIG } from './firebase-config.js';
+
+  await requireMasterAuth();
+
+  const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+  const db = getFirestore(app);
+
+  const listEl = document.getElementById('client-list');
+
+  try {
+    const q = query(collection(db, 'metaClients'), where('template', '==', 'T4'));
+    const snap = await getDocs(q);
+    const clients = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.clientId);
+    clients.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+    if (clients.length === 0) {
+      listEl.innerHTML = `<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>No T4 clients yet.</p></div>`;
+    } else {
+      listEl.innerHTML = clients.map(c => `
+        <button class="btn btn-ghost btn-block client-pick-btn" data-client-id="${esc(c.clientId)}"
+          style="justify-content:space-between; margin-bottom:8px; text-align:left;">
+          <span><i class="fa-solid fa-building" style="margin-right:8px;"></i>${esc(c.name || c.clientId)}</span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      `).join('');
+
+      listEl.querySelectorAll('.client-pick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          sessionStorage.setItem('masterViewClientId', btn.dataset.clientId);
+          window.location.href = './dashboard.html';
+        });
+      });
+    }
+  } catch (err) {
+    console.error('Failed to load T4 clients:', err);
+    listEl.innerHTML = `<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><p>Failed to load clients: ${esc(err.message)}</p></div>`;
+  }
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>

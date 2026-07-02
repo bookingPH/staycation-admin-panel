@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Master Dashboard — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="icon" type="image/png" href="./favicon.png">
+  <link rel="stylesheet" href="./admin-styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name">Apex Automation</div>
+      <div class="sidebar-brand-tag">Master Dashboard</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="./master-dashboard.html" class="active"><i class="fa-solid fa-chart-pie"></i> All Clients</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-email" id="admin-email">—</div>
+      <button class="btn-signout" id="signout-btn">
+        <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-header-left">
+        <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        <span class="page-title">All Clients</span>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- SUMMARY CARDS -->
+      <div class="metrics-grid" id="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon blue"><i class="fa-solid fa-users"></i></div>
+          <div class="metric-value" id="m-total">—</div>
+          <div class="metric-label">Total Clients</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon green"><i class="fa-solid fa-peso-sign"></i></div>
+          <div class="metric-value" id="m-mrr">—</div>
+          <div class="metric-label">MRR (Monthly Recurring)</div>
+          <div class="metric-sublabel" id="m-mrr-split">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon orange"><i class="fa-solid fa-sack-dollar"></i></div>
+          <div class="metric-value" id="m-setup">—</div>
+          <div class="metric-label">Total Setup Revenue</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon purple"><i class="fa-solid fa-coins"></i></div>
+          <div class="metric-value" id="m-lifetime">—</div>
+          <div class="metric-label">Lifetime Revenue</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div class="metric-value" id="m-overdue">—</div>
+          <div class="metric-label">Overdue Clients</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Monthly Revenue Collected</span>
+          <span style="font-size:12px;color:var(--muted);">Based on logged payments, last 12 months</span>
+        </div>
+        <div style="padding:20px;">
+          <canvas id="revenue-chart" height="80"></canvas>
+          <div class="empty-state" id="chart-empty" style="display:none;"><i class="fa-solid fa-chart-column"></i><p>No payments logged yet — use "Log Payment" on a client row to start tracking.</p></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Clients</span>
+          <span style="font-size:12px;color:var(--muted);">Click any fee to edit</span>
+        </div>
+        <div id="clients-container">
+          <div class="loading-state"><span class="spinner"></span></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Log Payment Modal -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Log Payment — <span id="pay-client-name"></span></div>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Date <span class="required">*</span></label>
+        <input type="date" class="form-control" id="pay-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Amount (₱) <span class="required">*</span></label>
+        <input type="number" class="form-control" id="pay-amount" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note (optional)</label>
+        <input type="text" class="form-control" id="pay-note" placeholder="e.g. GCash, June monthly fee">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="pay-save-btn"><i class="fa-solid fa-floppy-disk"></i> Save Payment</button>
+      <button class="btn btn-ghost" id="pay-cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script type="module">
+  import { requireMasterAuth, adminSignOut, getAdminFirebase } from './admin-auth.js';
+  import {
+    collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc, addDoc,
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  // Mobile sidebar toggle
+  document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('open');
+  });
+  document.getElementById('sidebar-overlay').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  });
+
+  // --- Auth guard (master only)
+  const { user } = await requireMasterAuth();
+  document.getElementById('admin-email').textContent = user.email;
+  document.getElementById('signout-btn').addEventListener('click', adminSignOut);
+
+  const { db } = getAdminFirebase();
+
+  let latestClients = [];
+  let latestPayments = [];
+  let revenueChart = null;
+
+  onSnapshot(collection(db, 'metaClients'), (snap) => {
+    latestClients = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    latestClients.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    renderAll();
+  }, (err) => {
+    console.error('metaClients snapshot error:', err);
+    document.getElementById('clients-container').innerHTML =
+      `<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><p>Failed to load clients: ${esc(err.message)}</p></div>`;
+  });
+
+  onSnapshot(collection(db, 'metaPayments'), (snap) => {
+    latestPayments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderAll();
+  }, (err) => {
+    console.error('metaPayments snapshot error:', err);
+  });
+
+  function renderAll() {
+    renderSummary(latestClients, latestPayments);
+    renderChart(latestPayments);
+    renderTable(latestClients, latestPayments);
+  }
+
+  function renderSummary(clientList, payments) {
+    const mrr    = clientList.reduce((s, c) => s + (Number(c.monthlyFee) || 0), 0);
+    const setup  = clientList.reduce((s, c) => s + (Number(c.setupFee) || 0), 0);
+    const mrrT1  = clientList.filter(c => c.template === 'T1').reduce((s, c) => s + (Number(c.monthlyFee) || 0), 0);
+    const mrrT4  = clientList.filter(c => c.template === 'T4').reduce((s, c) => s + (Number(c.monthlyFee) || 0), 0);
+    const paid   = payments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+    const overdueCount = clientList.filter(c => isOverdue(c)).length;
+
+    document.getElementById('m-total').textContent    = clientList.length;
+    document.getElementById('m-mrr').textContent       = formatCurrency(mrr);
+    document.getElementById('m-mrr-split').textContent = `T1: ${formatCurrency(mrrT1)} · T4: ${formatCurrency(mrrT4)}`;
+    document.getElementById('m-setup').textContent    = formatCurrency(setup);
+    document.getElementById('m-lifetime').textContent = formatCurrency(setup + paid);
+    document.getElementById('m-overdue').textContent  = overdueCount;
+  }
+
+  function renderChart(payments) {
+    const canvas = document.getElementById('revenue-chart');
+    const emptyState = document.getElementById('chart-empty');
+
+    if (payments.length === 0) {
+      canvas.style.display = 'none';
+      emptyState.style.display = '';
+      return;
+    }
+    canvas.style.display = '';
+    emptyState.style.display = 'none';
+
+    // Bucket by YYYY-MM, build last 12 months (oldest -> newest)
+    const now = new Date();
+    const buckets = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      buckets.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+        label: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }), total: 0 });
+    }
+    const byKey = Object.fromEntries(buckets.map(b => [b.key, b]));
+    payments.forEach(p => {
+      const key = String(p.date || '').slice(0, 7);
+      if (byKey[key]) byKey[key].total += Number(p.amount) || 0;
+    });
+
+    if (revenueChart) revenueChart.destroy();
+    revenueChart = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: buckets.map(b => b.label),
+        datasets: [{ label: 'Revenue Collected', data: buckets.map(b => b.total),
+          backgroundColor: '#ea580c', borderRadius: 4 }],
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => formatCurrency(v) } } },
+      },
+    });
+  }
+
+  function isOverdue(c) {
+    if (c.active === false) return false;
+    const fee = Number(c.monthlyFee) || 0;
+    if (fee <= 0) return false;
+    const baseline = c.lastPaidDate || c.dateOnboarded;
+    if (!baseline) return false;
+    const days = (Date.now() - new Date(baseline).getTime()) / 86400000;
+    return days > 35;
+  }
+
+  function renderTable(clientList, payments) {
+    const container = document.getElementById('clients-container');
+
+    if (clientList.length === 0) {
+      container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>No clients yet.</p></div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Template</th>
+              <th>Status</th>
+              <th>Active</th>
+              <th>Setup Fee</th>
+              <th>Monthly Fee</th>
+              <th>Last Paid</th>
+              <th>Facebook Page</th>
+              <th>Onboarded</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="clients-tbody"></tbody>
+        </table>
+      </div>
+    `;
+
+    document.getElementById('clients-tbody').innerHTML = clientList.map(c => `
+      <tr data-id="${esc(c.id)}">
+        <td style="font-weight:600;">${esc(c.name || '—')}</td>
+        <td>${templateBadge(c.template)}</td>
+        <td>${esc(c.status || '—')}</td>
+        <td>${activeToggle(c)}</td>
+        <td>${editableFeeCell(c.id, 'setupFee', c.setupFee)}</td>
+        <td>${editableFeeCell(c.id, 'monthlyFee', c.monthlyFee)} ${isOverdue(c) ? '<span class="badge badge-rejected" title="No payment logged within 35 days">Overdue</span>' : ''}</td>
+        <td style="white-space:nowrap;">${esc(c.lastPaidDate || '—')}</td>
+        <td>${esc(c.fbPage || '—')}</td>
+        <td style="white-space:nowrap;">${esc(c.dateOnboarded || '—')}</td>
+        <td>${actionsCell(c)}</td>
+      </tr>
+    `).join('');
+
+    // Enter Panel buttons
+    document.querySelectorAll('.enter-panel-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const clientId = btn.dataset.clientId;
+        sessionStorage.setItem('masterViewClientId', clientId);
+        window.location.href = './dashboard.html';
+      });
+    });
+
+    // Inline fee editing
+    document.querySelectorAll('.fee-value').forEach(el => {
+      el.addEventListener('click', () => startEditingFee(el));
+    });
+
+    // Active/Suspend toggle
+    document.querySelectorAll('.active-toggle-btn').forEach(btn => {
+      btn.addEventListener('click', () => toggleActive(btn));
+    });
+
+    // Delete client
+    document.querySelectorAll('.delete-client-btn').forEach(btn => {
+      btn.addEventListener('click', () => deleteClient(btn));
+    });
+
+    // Log payment
+    document.querySelectorAll('.log-payment-btn').forEach(btn => {
+      btn.addEventListener('click', () => openPaymentModal(btn.dataset.docId, btn.dataset.name, btn.dataset.monthlyFee));
+    });
+  }
+
+  // --- Log Payment modal
+  let payingClientId = null;
+  function openPaymentModal(docId, name, monthlyFee) {
+    payingClientId = docId;
+    document.getElementById('pay-client-name').textContent = name;
+    document.getElementById('pay-date').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('pay-amount').value = Number(monthlyFee) || 0;
+    document.getElementById('pay-note').value = '';
+    document.getElementById('modal-backdrop').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closePaymentModal() {
+    document.getElementById('modal-backdrop').classList.remove('open');
+    document.body.style.overflow = '';
+    payingClientId = null;
+  }
+  document.getElementById('modal-close').addEventListener('click', closePaymentModal);
+  document.getElementById('pay-cancel-btn').addEventListener('click', closePaymentModal);
+  document.getElementById('modal-backdrop').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-backdrop')) closePaymentModal();
+  });
+  document.getElementById('pay-save-btn').addEventListener('click', async () => {
+    const date = document.getElementById('pay-date').value;
+    const amount = Number(document.getElementById('pay-amount').value);
+    const note = document.getElementById('pay-note').value.trim();
+    if (!date) { showToast('Date is required', 'error'); return; }
+    if (isNaN(amount) || amount <= 0) { showToast('Amount must be greater than 0', 'error'); return; }
+    try {
+      await addDoc(collection(db, 'metaPayments'), {
+        clientDocId: payingClientId, date, amount, note: note || null,
+        loggedAt: new Date().toISOString(),
+      });
+      await updateDoc(doc(db, 'metaClients', payingClientId), { lastPaidDate: date });
+      showToast('Payment logged', 'success');
+      closePaymentModal();
+    } catch (err) {
+      console.error('Failed to log payment:', err);
+      showToast('Failed to log payment — check permissions', 'error');
+    }
+  });
+
+  function activeToggle(c) {
+    const isActive = c.active !== false; // default true if unset
+    const cls = isActive ? 'badge-confirmed' : 'badge-rejected';
+    const label = isActive ? 'Active' : 'Suspended';
+    const hint = c.template === 'T4' && c.clientId
+      ? (isActive ? 'Click to suspend — takes their booking site offline and blocks their admin login' : 'Click to reactivate their booking site and admin login')
+      : (isActive ? 'Click to mark suspended (record only — does not stop the n8n chatbot)' : 'Click to mark active again');
+    return `<button class="btn btn-sm active-toggle-btn" data-doc-id="${esc(c.id)}" data-client-id="${esc(c.clientId || '')}"
+      data-template="${esc(c.template || '')}" data-active="${isActive}" title="${esc(hint)}"
+      style="background:none;padding:0;">
+      <span class="badge ${cls}" style="cursor:pointer;">${label}</span>
+    </button>`;
+  }
+
+  async function toggleActive(btn) {
+    const docId = btn.dataset.docId;
+    const clientId = btn.dataset.clientId;
+    const template = btn.dataset.template;
+    const wasActive = btn.dataset.active === 'true';
+    const nowActive = !wasActive;
+
+    const confirmMsg = nowActive
+      ? 'Reactivate this client?'
+      : template === 'T4' && clientId
+        ? 'Suspend this client? Their booking site will show as unavailable and their admin login will be blocked until you reactivate them.'
+        : 'Mark this client as suspended? (Record only — their n8n chatbot keeps running until you unpublish it manually.)';
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      await updateDoc(doc(db, 'metaClients', docId), {
+        active: nowActive,
+        status: nowActive ? 'Live' : 'Suspended',
+      });
+      // For T4 clients, mirror the kill switch onto their live settings/public
+      // so the booking site + their own admin login actually enforce it.
+      if (template === 'T4' && clientId) {
+        await setDoc(doc(db, 'clients', clientId, 'settings', 'public'),
+          { suspended: !nowActive }, { merge: true });
+      }
+      showToast(nowActive ? 'Client reactivated' : 'Client suspended', 'success');
+    } catch (err) {
+      console.error('Failed to toggle active state:', err);
+      showToast('Failed to update — check permissions', 'error');
+    }
+  }
+
+  async function deleteClient(btn) {
+    const docId = btn.dataset.docId;
+    const name = btn.dataset.name;
+    if (!confirm(`Remove "${name}" from your dashboard? This only removes them from this client list — their live booking site/chatbot and Firestore data are NOT deleted.`)) return;
+    try {
+      await deleteDoc(doc(db, 'metaClients', docId));
+      showToast('Client removed from dashboard', 'success');
+    } catch (err) {
+      console.error('Failed to delete client:', err);
+      showToast('Failed to delete — check permissions', 'error');
+    }
+  }
+
+  function editableFeeCell(clientId, field, value) {
+    const shown = value === undefined || value === null ? 0 : Number(value);
+    return `<span class="fee-value" data-client-id="${esc(clientId)}" data-field="${field}" data-value="${shown}" title="Click to edit">${formatCurrency(shown)}</span>`;
+  }
+
+  function startEditingFee(el) {
+    if (el.querySelector('input')) return; // already editing
+    const clientId = el.dataset.clientId;
+    const field = el.dataset.field;
+    const current = el.dataset.value;
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0';
+    input.value = current;
+    input.className = 'form-control';
+    input.style.cssText = 'width:100px;padding:4px 8px;font-size:13px;';
+
+    el.textContent = '';
+    el.appendChild(input);
+    input.focus();
+    input.select();
+
+    let done = false;
+    const save = async () => {
+      if (done) return;
+      done = true;
+      const newVal = Number(input.value);
+      if (isNaN(newVal) || newVal < 0) {
+        showToast('Fee must be a non-negative number', 'error');
+        el.textContent = formatCurrency(Number(current));
+        return;
+      }
+      try {
+        await updateDoc(doc(db, 'metaClients', clientId), { [field]: newVal });
+        showToast('Saved', 'success');
+      } catch (err) {
+        console.error('Failed to update fee:', err);
+        showToast('Failed to save — check permissions', 'error');
+        el.textContent = formatCurrency(Number(current));
+      }
+    };
+
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') input.blur();
+      if (e.key === 'Escape') { done = true; el.textContent = formatCurrency(Number(current)); }
+    });
+  }
+
+  function actionsCell(c) {
+    const enterBtn = c.template === 'T4' && c.clientId
+      ? `<button class="btn btn-sm btn-ghost enter-panel-btn" data-client-id="${esc(c.clientId)}">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> Enter Panel
+        </button>`
+      : `<span class="badge badge-cancelled">Chatbot Only</span>`;
+    const payBtn = `<button class="btn btn-sm btn-ghost log-payment-btn" data-doc-id="${esc(c.id)}" data-name="${esc(c.name || 'this client')}" data-monthly-fee="${Number(c.monthlyFee) || 0}" title="Log a payment">
+      <i class="fa-solid fa-peso-sign"></i>
+    </button>`;
+    const deleteBtn = `<button class="btn btn-sm btn-ghost delete-client-btn" data-doc-id="${esc(c.id)}" data-name="${esc(c.name || 'this client')}" title="Remove from dashboard" style="color:var(--danger);">
+      <i class="fa-solid fa-trash"></i>
+    </button>`;
+    return `<div style="display:flex;gap:6px;align-items:center;">${enterBtn}${payBtn}${deleteBtn}</div>`;
+  }
+
+  function templateBadge(t) {
+    const cls = t === 'T4' ? 'badge-confirmed' : 'badge-pending';
+    return `<span class="badge ${cls}">${esc(t || '—')}</span>`;
+  }
+
+  function formatCurrency(n) {
+    return '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function showToast(msg, type = 'info') {
+    const tc = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' };
+    t.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i> ${esc(msg)}`;
+    tc.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 4000);
+  }
+</script>
+</body>
+</html>

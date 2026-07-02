@@ -72,7 +72,10 @@ exports.handler = async (event) => {
     try {
       const decoded = await admin.auth().verifyIdToken(token);
       const adminSnap = await admin.firestore().doc(`admins/${decoded.email}`).get();
-      if (!adminSnap.exists || adminSnap.data().clientId !== clientId) {
+      const adminData = adminSnap.exists ? adminSnap.data() : null;
+      const isOwner = adminData && adminData.clientId === clientId;
+      const isMaster = adminData && adminData.role === 'master';
+      if (!isOwner && !isMaster) {
         return json(403, { error: 'Access denied' }, origin);
       }
     } catch {
