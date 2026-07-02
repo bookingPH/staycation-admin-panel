@@ -13,9 +13,87 @@ const {
   emailHeader, emailFooter, refBox, detailTable, noticeBanner,
 } = require('./_shared');
 
+function buildPricingBreakdown(booking) {
+  const reservationFee = booking.reservationFee || 500;
+  const securityDeposit = booking.securityDeposit || 0;
+  const remainingBalance = Math.max(0, booking.grandTotal - reservationFee);
+  const totalDueAtCheckin = remainingBalance + securityDeposit;
+
+  let addonRows = '';
+  if (Array.isArray(booking.addons) && booking.addons.length > 0) {
+    addonRows = booking.addons.map(a =>
+      `<tr>
+        <td style="padding:4px 0;font-size:13px;color:#888;">${a.name}</td>
+        <td style="padding:4px 0;font-size:14px;color:#333;text-align:right;">${formatCurrency(a.total)}</td>
+      </tr>`
+    ).join('');
+  }
+  const extraGuestRow = booking.extraGuestTotal > 0 ? `
+    <tr>
+      <td style="padding:4px 0;font-size:13px;color:#888;">Extra guests (${booking.extraGuests} pax)</td>
+      <td style="padding:4px 0;font-size:14px;color:#333;text-align:right;">${formatCurrency(booking.extraGuestTotal)}</td>
+    </tr>` : '';
+  const secDepRow = securityDeposit > 0 ? `
+    <tr>
+      <td style="padding:4px 0;font-size:13px;color:#888;">Security deposit <em style="font-size:0.85em;">(refundable at checkout)</em></td>
+      <td style="padding:4px 0;font-size:14px;color:#333;text-align:right;">${formatCurrency(securityDeposit)}</td>
+    </tr>` : '';
+
+  return `<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;background:#f9f9f9;border-radius:6px;overflow:hidden;">
+  <tr><td colspan="2" style="padding:12px 16px 8px;border-bottom:1px solid #eee;">
+    <h3 style="margin:0;font-size:14px;text-transform:uppercase;letter-spacing:1px;color:#888;">Price Breakdown</h3>
+  </td></tr>
+  <tr>
+    <td style="padding:8px 16px 4px;font-size:13px;color:#888;">Base rate (${booking.nights} night${Number(booking.nights) !== 1 ? 's' : ''})</td>
+    <td style="padding:8px 16px 4px;font-size:14px;color:#333;text-align:right;">${formatCurrency(booking.baseTotal)}</td>
+  </tr>
+  ${extraGuestRow}
+  ${addonRows}
+  <tr><td colspan="2" style="padding:0 16px;"><hr style="border:none;border-top:1px solid #ddd;margin:6px 0;"></td></tr>
+  <tr>
+    <td style="padding:4px 16px;font-size:14px;font-weight:700;color:#333;">Grand Total</td>
+    <td style="padding:4px 16px;font-size:16px;font-weight:700;color:#333;text-align:right;">${formatCurrency(booking.grandTotal)}</td>
+  </tr>
+  <tr><td colspan="2" style="padding:0 16px;"><hr style="border:none;border-top:2px solid #ddd;margin:6px 0;"></td></tr>
+  <tr>
+    <td style="padding:4px 16px;font-size:13px;color:#888;">Reservation fee paid ✓</td>
+    <td style="padding:4px 16px;font-size:14px;color:#2e7d32;font-weight:600;text-align:right;">${formatCurrency(reservationFee)}</td>
+  </tr>
+  <tr>
+    <td style="padding:4px 16px;font-size:13px;color:#888;">Remaining balance</td>
+    <td style="padding:4px 16px;font-size:14px;color:#333;text-align:right;">${formatCurrency(remainingBalance)}</td>
+  </tr>
+  ${secDepRow}
+  <tr>
+    <td style="padding:8px 16px;font-size:14px;font-weight:700;color:#C8623A;border-top:1px solid #eee;">Total due at check-in</td>
+    <td style="padding:8px 16px;font-size:16px;font-weight:700;color:#C8623A;text-align:right;border-top:1px solid #eee;">${formatCurrency(totalDueAtCheckin)}</td>
+  </tr>
+</table>`;
+}
+
+function buildPricingText(booking) {
+  const reservationFee = booking.reservationFee || 500;
+  const securityDeposit = booking.securityDeposit || 0;
+  const remainingBalance = Math.max(0, booking.grandTotal - reservationFee);
+  const totalDueAtCheckin = remainingBalance + securityDeposit;
+  let lines = ['\n--- PRICE BREAKDOWN ---'];
+  lines.push(`Base rate (${booking.nights} night${Number(booking.nights) !== 1 ? 's' : ''}): PHP ${Number(booking.baseTotal).toFixed(2)}`);
+  if (booking.extraGuestTotal > 0) lines.push(`Extra guests (${booking.extraGuests} pax): PHP ${Number(booking.extraGuestTotal).toFixed(2)}`);
+  if (Array.isArray(booking.addons) && booking.addons.length > 0) {
+    booking.addons.forEach(a => lines.push(`${a.name}: PHP ${Number(a.total).toFixed(2)}`));
+  }
+  lines.push(`Grand Total: PHP ${Number(booking.grandTotal).toFixed(2)}`);
+  lines.push(`\nReservation fee paid: PHP ${Number(reservationFee).toFixed(2)}`);
+  lines.push(`Remaining balance: PHP ${Number(remainingBalance).toFixed(2)}`);
+  if (securityDeposit > 0) lines.push(`Security deposit (refundable at checkout): PHP ${Number(securityDeposit).toFixed(2)}`);
+  lines.push(`Total due at check-in: PHP ${Number(totalDueAtCheckin).toFixed(2)}`);
+  lines.push('-----------------------');
+  return lines.join('\n');
+}
+
 function buildHtml(settings, booking, adminNote) {
   const { companyName = 'Property', address, phone, email: contactEmail } = settings.public;
-  const { referenceNo, guestName, unitName, checkIn, checkOut, nights, grandTotal, paymentMethod } = booking;
+  const { referenceNo, guestName, unitName, checkIn, checkOut, nights, paymentMethod } = booking;
   const checkInTime = booking.checkInTime || settings.public.checkInTime || '2:00 PM';
   const checkOutTime = booking.checkOutTime || settings.public.checkOutTime || '12:00 PM';
   const contactLine = [phone, contactEmail].filter(Boolean).join(' | ');
@@ -33,8 +111,8 @@ function buildHtml(settings, booking, adminNote) {
         ['Nights', `${nights} night${Number(nights) !== 1 ? 's' : ''}`],
         ['Payment Method', paymentMethod],
         ...(address ? [['Address', address]] : []),
-        ['Grand Total', `<span style="font-size:18px;color:#2e7d32;font-weight:700;">${formatCurrency(grandTotal)}</span>`, 'border-top:1px solid #eee;padding-top:12px;'],
       ])
+    + buildPricingBreakdown(booking)
     + noticeBanner(`✅ <strong>Status: Confirmed</strong><br>See you on <strong>${formatDate(checkIn)}</strong>! Please be ready at check-in time.`, '#e8f5e9', '#2e7d32')
     + (adminNote ? noticeBanner(`<strong>Note from us:</strong><br>${adminNote}`, '#f0f7f0', '#2e7d32') : '')
     + `<p style="margin:0 0 8px;font-size:14px;color:#555;">Need to cancel or reschedule? Please contact us early:</p>`
@@ -45,11 +123,11 @@ function buildHtml(settings, booking, adminNote) {
 
 function buildText(settings, booking, adminNote) {
   const { companyName = 'Property', phone, email: contactEmail } = settings.public;
-  const { referenceNo, guestName, unitName, checkIn, checkOut, nights, grandTotal, paymentMethod } = booking;
+  const { referenceNo, guestName, unitName, checkIn, checkOut, nights, paymentMethod } = booking;
   const checkInTime = booking.checkInTime || settings.public.checkInTime || '2:00 PM';
   const checkOutTime = booking.checkOutTime || settings.public.checkOutTime || '12:00 PM';
   const contactLine = [phone, contactEmail].filter(Boolean).join(' | ');
-  return `Hi ${guestName},\n\nYour booking at ${companyName} is CONFIRMED!\n\nRef: ${referenceNo}\nProperty: ${unitName}\nCheck-in: ${formatDate(checkIn)} at ${checkInTime}\nCheck-out: ${formatDate(checkOut)} at ${checkOutTime}\nNights: ${nights}\nPayment: ${paymentMethod}\nTotal: PHP ${Number(grandTotal).toFixed(2)}\n${adminNote ? `\nNote: ${adminNote}\n` : ''}\nContact us: ${contactLine || companyName}\n\nSee you on ${formatDate(checkIn)}!\n${companyName}\n`;
+  return `Hi ${guestName},\n\nYour booking at ${companyName} is CONFIRMED!\n\nRef: ${referenceNo}\nProperty: ${unitName}\nCheck-in: ${formatDate(checkIn)} at ${checkInTime}\nCheck-out: ${formatDate(checkOut)} at ${checkOutTime}\nNights: ${nights}\nPayment: ${paymentMethod}\n${buildPricingText(booking)}\n${adminNote ? `\nNote: ${adminNote}\n` : ''}\nContact us: ${contactLine || companyName}\n\nSee you on ${formatDate(checkIn)}!\n${companyName}\n`;
 }
 
 exports.handler = async (event) => {
