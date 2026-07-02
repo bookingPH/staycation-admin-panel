@@ -57,9 +57,9 @@ function calculatePricing({ unit, nights, numGuests, selectedAddons, settings })
   let addonsTotal = 0;
   const addonDetails = [];
   for (const addon of selectedAddons) {
-    const lineTotal = addon.billingType === 'pernight' ? addon.price * nights.length : addon.price;
+    const lineTotal = addon.billingRule === 'pernight' ? addon.price * nights.length : addon.price;
     addonsTotal += lineTotal;
-    addonDetails.push({ id: addon.id, name: addon.name, price: addon.price, billingType: addon.billingType, total: lineTotal });
+    addonDetails.push({ id: addon.id, name: addon.name, price: addon.price, billingRule: addon.billingRule, total: lineTotal });
   }
 
   const grandTotal = baseTotal + extraGuestTotal + addonsTotal;
