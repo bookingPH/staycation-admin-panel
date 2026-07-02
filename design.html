@@ -223,8 +223,17 @@
               <input type="text" class="form-control" id="seo-keywords" placeholder="e.g. staycation, beach villa, booking, Batangas">
             </div>
             <div class="form-group">
-              <label class="form-label">OG Image URL (Social Share Preview)</label>
-              <input type="text" class="form-control" id="seo-og" placeholder="https://…">
+              <label class="form-label">OG Image (Social Share Preview)</label>
+              <p style="font-size:13px;color:var(--muted);margin-bottom:8px;">The thumbnail shown when your booking site link is shared on Facebook Messenger. Upload a landscape photo (about 1200×630px works best).</p>
+              <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                <label class="btn btn-ghost" style="cursor:pointer;">
+                  <i class="fa-solid fa-upload"></i> Upload Image
+                  <input type="file" id="seo-og-upload" accept="image/*" style="display:none;">
+                </label>
+                <span id="seo-og-status" style="font-size:12px;color:var(--muted);"></span>
+              </div>
+              <div id="seo-og-preview" style="margin-top:12px;"></div>
+              <input type="text" class="form-control" id="seo-og" placeholder="https://…" style="margin-top:8px;">
             </div>
           </div>
         </div>
@@ -256,7 +265,7 @@
   document.getElementById('signout-btn').addEventListener('click', adminSignOut);
   const { db } = getAdminFirebase();
 
-  let heroUrls = [], bannerUrl = '';
+  let heroUrls = [], bannerUrl = '', ogImageUrl = '';
 
   // Load current settings
   try {
@@ -290,7 +299,10 @@
 
       if (d.seoTitle)    document.getElementById('seo-title').value = d.seoTitle;
       if (d.seoKeywords) document.getElementById('seo-keywords').value = d.seoKeywords;
-      if (d.seoOgImage)  document.getElementById('seo-og').value = d.seoOgImage;
+
+      ogImageUrl = d.seoOgImage || '';
+      document.getElementById('seo-og').value = ogImageUrl;
+      renderOgPreview();
     }
   } catch (err) { showToast('Could not load settings: ' + err.message, 'error'); }
 
@@ -419,6 +431,63 @@
       renderBannerPreview();
     });
   }
+
+  // OG image upload
+  document.getElementById('seo-og-upload').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const status = document.getElementById('seo-og-status');
+    status.textContent = 'Uploading…';
+    try {
+      const token = await user.getIdToken();
+      const sigRes = await fetch('/.netlify/functions/get-upload-signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ clientId, type: 'public' }),
+      });
+      if (!sigRes.ok) throw new Error('Could not get upload signature');
+      const sig = await sigRes.json();
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('api_key', sig.apiKey);
+      fd.append('timestamp', sig.timestamp);
+      fd.append('signature', sig.signature);
+      fd.append('folder', sig.folder);
+      fd.append('allowed_formats', sig.allowedFormats);
+      fd.append('unique_filename', 'true');
+      fd.append('overwrite', 'false');
+      const up = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, { method: 'POST', body: fd });
+      if (!up.ok) throw new Error('Upload failed');
+      const data = await up.json();
+      ogImageUrl = data.secure_url;
+      document.getElementById('seo-og').value = ogImageUrl;
+      renderOgPreview();
+      status.textContent = 'Uploaded!';
+    } catch (err) { showToast('Upload failed: ' + err.message, 'error'); status.textContent = ''; }
+    e.target.value = '';
+  });
+
+  function renderOgPreview() {
+    const el = document.getElementById('seo-og-preview');
+    if (!ogImageUrl) { el.innerHTML = ''; return; }
+    el.innerHTML = `
+      <div class="hero-img-thumb" style="width:120px;height:70px;">
+        <img src="${esc(ogImageUrl)}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" alt="">
+        <button class="hero-img-remove" id="seo-og-remove" type="button">&times;</button>
+      </div>
+    `;
+    document.getElementById('seo-og-remove').addEventListener('click', () => {
+      ogImageUrl = '';
+      document.getElementById('seo-og').value = '';
+      renderOgPreview();
+    });
+  }
+
+  // Keep manual edits to the URL field in sync with the preview/state
+  document.getElementById('seo-og').addEventListener('change', (e) => {
+    ogImageUrl = e.target.value.trim();
+    renderOgPreview();
+  });
 
   // Save all
   document.getElementById('save-all-btn').addEventListener('click', async () => {
