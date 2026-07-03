@@ -73,6 +73,11 @@
           <div class="metric-value" id="m-overdue">—</div>
           <div class="metric-label">Overdue Clients</div>
         </div>
+        <div class="metric-card">
+          <div class="metric-icon purple"><i class="fa-solid fa-hourglass-half"></i></div>
+          <div class="metric-value" id="m-trials">—</div>
+          <div class="metric-label">Active Trials</div>
+        </div>
       </div>
 
       <div class="card">
@@ -187,6 +192,7 @@
     const mrrT4  = clientList.filter(c => c.template === 'T4').reduce((s, c) => s + (Number(c.monthlyFee) || 0), 0);
     const paid   = payments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
     const overdueCount = clientList.filter(c => isOverdue(c)).length;
+    const trialsCount  = clientList.filter(c => isOnTrial(c)).length;
 
     document.getElementById('m-total').textContent    = clientList.length;
     document.getElementById('m-mrr').textContent       = formatCurrency(mrr);
@@ -194,6 +200,24 @@
     document.getElementById('m-setup').textContent    = formatCurrency(setup);
     document.getElementById('m-lifetime').textContent = formatCurrency(setup + paid);
     document.getElementById('m-overdue').textContent  = overdueCount;
+    document.getElementById('m-trials').textContent   = trialsCount;
+  }
+
+  // A client is "on trial" while trialEndsAt is set, they haven't converted yet,
+  // and they haven't already been auto-suspended by check-trials.js.
+  function isOnTrial(c) {
+    return !!c.trialEndsAt && !c.trialConverted;
+  }
+
+  function trialDaysLeft(c) {
+    return Math.ceil((new Date(c.trialEndsAt).getTime() - Date.now()) / 86400000);
+  }
+
+  function trialBadge(c) {
+    if (!isOnTrial(c)) return '';
+    const days = trialDaysLeft(c);
+    if (days < 0) return `<span class="badge badge-rejected" title="Trial ended ${-days}d ago — auto-suspend runs daily">Trial expired</span>`;
+    return `<span class="badge badge-pending" title="Monthly fee waived until trial ends">Trial: ${days}d left</span>`;
   }
 
   function renderChart(payments) {
@@ -282,7 +306,7 @@
         <td style="font-weight:600;">${esc(c.name || '—')}</td>
         <td>${templateBadge(c.template)}</td>
         <td>${esc(c.status || '—')}</td>
-        <td>${activeToggle(c)}</td>
+        <td>${activeToggle(c)} ${trialBadge(c)}</td>
         <td>${editableFeeCell(c.id, 'setupFee', c.setupFee)}</td>
         <td>${editableFeeCell(c.id, 'monthlyFee', c.monthlyFee)} ${isOverdue(c) ? '<span class="badge badge-rejected" title="No payment logged within 35 days">Overdue</span>' : ''}</td>
         <td style="white-space:nowrap;">${esc(c.lastPaidDate || '—')}</td>
@@ -319,6 +343,11 @@
     // Log payment
     document.querySelectorAll('.log-payment-btn').forEach(btn => {
       btn.addEventListener('click', () => openPaymentModal(btn.dataset.docId, btn.dataset.name, btn.dataset.monthlyFee));
+    });
+
+    // Convert trial to paying client
+    document.querySelectorAll('.convert-trial-btn').forEach(btn => {
+      btn.addEventListener('click', () => convertTrial(btn));
     });
   }
 
@@ -481,10 +510,28 @@
     const payBtn = `<button class="btn btn-sm btn-ghost log-payment-btn" data-doc-id="${esc(c.id)}" data-name="${esc(c.name || 'this client')}" data-monthly-fee="${Number(c.monthlyFee) || 0}" title="Log a payment">
       <i class="fa-solid fa-peso-sign"></i>
     </button>`;
+    const convertBtn = isOnTrial(c)
+      ? `<button class="btn btn-sm btn-ghost convert-trial-btn" data-doc-id="${esc(c.id)}" data-name="${esc(c.name || 'this client')}" title="Convert to a paying client — stops the trial countdown for good">
+          <i class="fa-solid fa-circle-check"></i> Convert
+        </button>`
+      : '';
     const deleteBtn = `<button class="btn btn-sm btn-ghost delete-client-btn" data-doc-id="${esc(c.id)}" data-name="${esc(c.name || 'this client')}" title="Remove from dashboard" style="color:var(--danger);">
       <i class="fa-solid fa-trash"></i>
     </button>`;
-    return `<div style="display:flex;gap:6px;align-items:center;">${enterBtn}${payBtn}${deleteBtn}</div>`;
+    return `<div style="display:flex;gap:6px;align-items:center;">${enterBtn}${payBtn}${convertBtn}${deleteBtn}</div>`;
+  }
+
+  async function convertTrial(btn) {
+    const docId = btn.dataset.docId;
+    const name = btn.dataset.name;
+    if (!confirm(`Convert "${name}" to a paying client? This stops the trial countdown for good — they'll never be auto-suspended by the trial system again. Use "Log Payment" separately once they've actually paid.`)) return;
+    try {
+      await updateDoc(doc(db, 'metaClients', docId), { trialConverted: true });
+      showToast('Converted — trial countdown stopped', 'success');
+    } catch (err) {
+      console.error('Failed to convert trial:', err);
+      showToast('Failed to update — check permissions', 'error');
+    }
   }
 
   function templateBadge(t) {
