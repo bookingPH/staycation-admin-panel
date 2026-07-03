@@ -154,6 +154,7 @@ body {
 .main-content {
   margin-left: var(--sidebar-w);
   flex: 1;
+  min-width: 0; /* let this flex item shrink below its widest descendant (e.g. a wide table) instead of forcing the page to overflow horizontally on mobile */
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -933,6 +934,9 @@ tbody tr:last-child td { border-bottom: none; }
   /* Tables: horizontal scroll on mobile */
   .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .table-wrap table { min-width: 480px; }
+
+  /* Dashboard: Needs Attention + Recent Bookings stack on mobile */
+  .dashboard-2col { grid-template-columns: 1fr !important; }
 
   /* Detail / settings */
   .detail-grid { grid-template-columns: 1fr; }
