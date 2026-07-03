@@ -178,6 +178,34 @@
           </div>
         </div>
 
+        <!-- Header & Footer Text -->
+        <div class="card design-section">
+          <div class="card-header"><span class="card-title"><i class="fa-solid fa-font"></i> Header & Footer Text</span></div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">The wording on your booking site's header, homepage banner, and footer. Leave a field blank to hide it completely.</p>
+            <div class="form-group">
+              <label class="form-label">Header Tag</label>
+              <input type="text" class="form-control" id="txt-nav-tag" placeholder="e.g. Book Direct">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Homepage Headline</label>
+              <input type="text" class="form-control" id="txt-hero-title" placeholder="e.g. Your Home Away From Home">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Homepage Subtext</label>
+              <textarea class="form-control" id="txt-hero-subtitle" rows="2" placeholder="e.g. Affordable stays, zero hassle. Browse our rooms, pick your dates, and book in minutes — no hidden fees."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Footer Tagline</label>
+              <input type="text" class="form-control" id="txt-footer-tagline" placeholder="e.g. Affordable Getaway">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Footer Paragraph</label>
+              <textarea class="form-control" id="txt-footer-text" rows="2" placeholder="e.g. Your go-to spot for a relaxing and affordable staycation. Book directly with us — no middlemen, no extra fees."></textarea>
+            </div>
+          </div>
+        </div>
+
         <!-- Hero Images -->
         <div class="card design-section">
           <div class="card-header"><span class="card-title"><i class="fa-solid fa-image"></i> Hero Images</span></div>
@@ -288,6 +316,12 @@
       setCheck('show-howitworks', d.showHowItWorks !== false);
       setCheck('show-featured',   d.showFeaturedUnits !== false);
       setCheck('show-cta',        d.showCTABanner !== false);
+
+      document.getElementById('txt-nav-tag').value       = d.navTag        ?? 'Book Direct';
+      document.getElementById('txt-hero-title').value    = d.heroTitle     ?? 'Your Home Away From Home';
+      document.getElementById('txt-hero-subtitle').value = d.heroSubtitle  ?? 'Affordable stays, zero hassle. Browse our rooms, pick your dates, and book in minutes — no hidden fees.';
+      document.getElementById('txt-footer-tagline').value = d.footerTagline ?? 'Affordable Getaway';
+      document.getElementById('txt-footer-text').value    = d.footerText    ?? 'Your go-to spot for a relaxing and affordable staycation. Book directly with us — no middlemen, no extra fees.';
 
       heroUrls = Array.isArray(d.heroImages) ? [...d.heroImages] : (d.heroImageUrl ? [d.heroImageUrl] : []);
       document.getElementById('hero-urls').value = JSON.stringify(heroUrls);
@@ -507,6 +541,11 @@
         showHowItWorks:     document.getElementById('show-howitworks').checked,
         showFeaturedUnits:  document.getElementById('show-featured').checked,
         showCTABanner:      document.getElementById('show-cta').checked,
+        navTag:             document.getElementById('txt-nav-tag').value.trim(),
+        heroTitle:          document.getElementById('txt-hero-title').value.trim(),
+        heroSubtitle:       document.getElementById('txt-hero-subtitle').value.trim(),
+        footerTagline:      document.getElementById('txt-footer-tagline').value.trim(),
+        footerText:         document.getElementById('txt-footer-text').value.trim(),
         heroImages:         JSON.parse(document.getElementById('hero-urls').value || '[]'),
         promoBannerUrl:     document.getElementById('banner-url').value,
         seoTitle:           document.getElementById('seo-title').value.trim(),
