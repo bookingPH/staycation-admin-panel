@@ -64,7 +64,7 @@
           <div class="cal-legend-item"><span class="cal-legend-dot" style="background:#059669;"></span> Confirmed</div>
           <div class="cal-legend-item"><span class="cal-legend-dot" style="background:#d97706;"></span> Pending</div>
           <div class="cal-legend-item"><span class="cal-legend-dot" style="background:#dc2626;"></span> Blocked</div>
-          <div class="cal-legend-item"><span class="cal-legend-dot" style="background:#94a3b8;"></span> Expired</div>
+          <div class="cal-legend-item"><span class="cal-legend-dot" style="background:#94a3b8;"></span> Cancelled / Rejected / Expired</div>
         </div>
       </div>
     </header>
@@ -207,9 +207,9 @@
     allBookings.forEach(b => {
       if (filterUnit !== 'all' && b.unitId && b.unitId !== filterUnit) return;
       if (!b.checkIn || !b.checkOut) return;
-      const cls = b.status === 'confirmed' ? 'ev-confirmed'
-                : b.status === 'pending'   ? 'ev-pending'
-                : b.status === 'expired'   ? 'ev-expired'
+      const cls = b.status === 'confirmed'                                  ? 'ev-confirmed'
+                : b.status === 'pending_review' || b.status === 'pending_payment' ? 'ev-pending'
+                : b.status === 'expired' || b.status === 'cancelled' || b.status === 'rejected' ? 'ev-expired'
                 : 'ev-pending';
       calendar.addEvent({
         title: `${b.guestName || 'Guest'} · ${b.unitName || ''}`,
