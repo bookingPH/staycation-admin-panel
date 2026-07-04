@@ -105,6 +105,13 @@
                   <input type="text" class="form-control color-field-hex" id="c-error-hex" value="#e53e3e" placeholder="#e53e3e">
                 </div>
               </div>
+              <div class="color-field">
+                <label class="form-label">Page Background</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input type="color" id="c-bg" value="#FAF6F1" style="width:44px;height:36px;border:none;border-radius:6px;cursor:pointer;padding:2px;">
+                  <input type="text" class="form-control color-field-hex" id="c-bg-hex" value="#FAF6F1" placeholder="#FAF6F1">
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -308,6 +315,7 @@
       setColor('c-secondary-text', d.secondaryTextColor  || '#ffffff');
       setColor('c-accent',         d.accentColor         || '#e8a87c');
       setColor('c-error',          d.errorColor          || '#e53e3e');
+      setColor('c-bg',             d.bgColor             || '#FAF6F1');
 
       if (d.headingFont) setSelect('font-heading', d.headingFont);
       if (d.bodyFont)    setSelect('font-body', d.bodyFont);
@@ -535,6 +543,7 @@
         secondaryTextColor: document.getElementById('c-secondary-text').value,
         accentColor:        document.getElementById('c-accent').value,
         errorColor:         document.getElementById('c-error').value,
+        bgColor:            document.getElementById('c-bg').value,
         headingFont:        document.getElementById('font-heading').value,
         bodyFont:           document.getElementById('font-body').value,
         showAmenities:      document.getElementById('show-amenities').checked,
