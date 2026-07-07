@@ -190,13 +190,14 @@
     const setup  = clientList.reduce((s, c) => s + (Number(c.setupFee) || 0), 0);
     const mrrT1  = clientList.filter(c => c.template === 'T1').reduce((s, c) => s + (Number(c.monthlyFee) || 0), 0);
     const mrrT4  = clientList.filter(c => c.template === 'T4').reduce((s, c) => s + (Number(c.monthlyFee) || 0), 0);
+    const mrrT5  = clientList.filter(c => c.template === 'T5').reduce((s, c) => s + (Number(c.monthlyFee) || 0), 0);
     const paid   = payments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
     const overdueCount = clientList.filter(c => isOverdue(c)).length;
     const trialsCount  = clientList.filter(c => isOnTrial(c)).length;
 
     document.getElementById('m-total').textContent    = clientList.length;
     document.getElementById('m-mrr').textContent       = formatCurrency(mrr);
-    document.getElementById('m-mrr-split').textContent = `T1: ${formatCurrency(mrrT1)} · T4: ${formatCurrency(mrrT4)}`;
+    document.getElementById('m-mrr-split').textContent = `T1: ${formatCurrency(mrrT1)} · T4: ${formatCurrency(mrrT4)} · T5: ${formatCurrency(mrrT5)}`;
     document.getElementById('m-setup').textContent    = formatCurrency(setup);
     document.getElementById('m-lifetime').textContent = formatCurrency(setup + paid);
     document.getElementById('m-overdue').textContent  = overdueCount;
@@ -535,7 +536,7 @@
   }
 
   function templateBadge(t) {
-    const cls = t === 'T4' ? 'badge-confirmed' : 'badge-pending';
+    const cls = t === 'T4' ? 'badge-confirmed' : t === 'T5' ? 'badge-cancelled' : 'badge-pending';
     return `<span class="badge ${cls}">${esc(t || '—')}</span>`;
   }
 
